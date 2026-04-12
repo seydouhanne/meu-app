@@ -6,7 +6,12 @@
       "caption": "Beau hein",
       "imgPath": "photos/1776024648374_c055.jpg",
       "ts": 1776024680386,
-      "reactions": [],
+      "reactions": [
+        {
+          "userId": "user1",
+          "emoji": "❤️"
+        }
+      ],
       "comments": []
     }
   ]
