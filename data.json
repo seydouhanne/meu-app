@@ -6,7 +6,12 @@
       "caption": "Bonsoir mon petit chou❤️",
       "imgPath": "photos/1776029842664_zibf.jpeg",
       "ts": 1776029844584,
-      "reactions": [],
+      "reactions": [
+        {
+          "userId": "user1",
+          "emoji": "❤️"
+        }
+      ],
       "comments": []
     },
     {
