@@ -1,24 +1,3 @@
 {
-  "posts": [
-    {
-      "id": "p1776024680386gxb",
-      "userId": "user1",
-      "caption": "Beau hein",
-      "imgPath": "photos/1776024648374_c055.jpg",
-      "ts": 1776024680386,
-      "reactions": [
-        {
-          "userId": "user1",
-          "emoji": "❤️"
-        }
-      ],
-      "comments": [
-        {
-          "userId": "user1",
-          "text": "Edhdjd",
-          "ts": 1776024727783
-        }
-      ]
-    }
-  ]
+  "posts": []
 }
