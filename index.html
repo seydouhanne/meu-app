@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Me&U</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rose: #e8a4a4;
+    --rose-deep: #c97b7b;
+    --rose-light: #f5dede;
+    --warm: #f9f0ec;
+    --warm-mid: #eeddd8;
+    --sand: #d4b8b0;
+    --text: #2a1f1f;
+    --text-soft: #7a5c5c;
+    --text-muted: #b89898;
+    --white: #fff;
+    --card-bg: rgba(255,255,255,0.88);
+    --radius: 20px;
+    --shadow: 0 4px 24px rgba(180,120,120,0.13);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--warm);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 80% 10%, rgba(232,164,164,0.22) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 50% at 10% 85%, rgba(212,184,176,0.18) 0%, transparent 60%);
+    pointer-events: none; z-index: 0;
+  }
+
+  /* ── AUTH ── */
+  #auth-screen {
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 32px 24px; position: relative; z-index: 1;
+  }
+  .auth-logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 54px; color: var(--rose-deep);
+    letter-spacing: -1px; margin-bottom: 4px; line-height: 1;
+  }
+  .auth-logo em { font-style: italic; color: var(--text); }
+  .auth-tagline {
+    font-size: 12px; color: var(--text-muted);
+    letter-spacing: 2.5px; text-transform: uppercase;
+    margin-bottom: 44px;
+  }
+  .auth-card {
+    background: var(--card-bg);
+    backdrop-filter: blur(14px);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 32px 28px;
+    width: 100%; max-width: 360px;
+    border: 1px solid rgba(255,255,255,0.9);
+  }
+  .auth-card h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px; margin-bottom: 22px; color: var(--text);
+  }
+  .user-picker { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 22px; }
+  .user-btn {
+    border: 2px solid var(--warm-mid); background: var(--warm);
+    border-radius: 14px; padding: 16px 10px;
+    cursor: pointer; transition: all 0.2s;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+  }
+  .user-btn.active { border-color: var(--rose-deep); background: var(--rose-light); }
+  .user-avatar {
+    width: 48px; height: 48px; border-radius: 50%;
+    background: var(--rose-light);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; transition: background 0.2s;
+  }
+  .user-btn.active .user-avatar { background: var(--rose); }
+  .user-name { font-size: 13px; font-weight: 500; color: var(--text-soft); }
+  .auth-input {
+    width: 100%; padding: 14px 16px;
+    border: 1.5px solid var(--warm-mid); border-radius: 12px;
+    background: var(--warm); font-family: 'DM Sans', sans-serif;
+    font-size: 15px; color: var(--text); outline: none;
+    transition: border 0.2s, background 0.2s; margin-bottom: 14px;
+  }
+  .auth-input:focus { border-color: var(--rose-deep); background: white; }
+  .auth-submit {
+    width: 100%; padding: 15px; background: var(--rose-deep);
+    color: white; border: none; border-radius: 12px;
+    font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .auth-submit:hover { background: var(--text); transform: translateY(-1px); }
+  .auth-error { color: var(--rose-deep); font-size: 13px; text-align: center; margin-top: 10px; min-height: 18px; }
+
+  /* ── SETUP ── */
+  #setup-screen {
+    display: none; min-height: 100vh;
+    flex-direction: column; align-items: center; justify-content: center;
+    padding: 32px 24px; position: relative; z-index: 1;
+  }
+  .setup-logo { font-family:'DM Serif Display',serif; font-size:36px; color:var(--rose-deep); margin-bottom:24px; }
+  .setup-logo em { font-style:italic; color:var(--text); }
+  .setup-card {
+    background: var(--card-bg); backdrop-filter: blur(14px);
+    border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 28px 24px; width: 100%; max-width: 440px;
+    border: 1px solid rgba(255,255,255,0.9);
+  }
+  .setup-card h2 { font-family:'DM Serif Display',serif; font-size:22px; margin-bottom:6px; }
+  .setup-intro { font-size:13px; color:var(--text-soft); margin-bottom:24px; line-height:1.7; }
+  .setup-section { margin-bottom:22px; padding-bottom:22px; border-bottom:1px solid var(--warm-mid); }
+  .setup-section:last-of-type { border-bottom:none; margin-bottom:0; }
+  .setup-section h3 { font-size:13px; font-weight:500; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:14px; }
+  .setup-field { margin-bottom:12px; }
+  .setup-label { font-size:12px; font-weight:500; color:var(--text-soft); display:block; margin-bottom:5px; }
+  .setup-hint { font-size:11px; color:var(--text-muted); margin-top:4px; line-height:1.5; }
+  .btn-setup {
+    width:100%; padding:14px; background:var(--rose-deep); color:white;
+    border:none; border-radius:12px; font-family:'DM Sans',sans-serif;
+    font-size:14px; font-weight:500; cursor:pointer; transition:background 0.2s; margin-top:8px;
+  }
+  .btn-setup:hover { background:var(--text); }
+  #setup-result { display:none; margin-top:18px; }
+  .setup-result-title { font-size:12px; font-weight:500; color:var(--text-soft); margin-bottom:6px; display:block; }
+  #setup-code {
+    width:100%; font-family:monospace; font-size:11px;
+    background:var(--warm); border:1.5px solid var(--warm-mid);
+    border-radius:10px; padding:12px; color:var(--text);
+    min-height:120px; resize:none; outline:none; line-height:1.6;
+  }
+  .copy-btn {
+    margin-top:8px; padding:9px 20px; background:var(--warm-mid);
+    border:none; border-radius:8px; cursor:pointer;
+    font-family:'DM Sans',sans-serif; font-size:13px; color:var(--text-soft);
+    transition:all 0.2s; width:100%;
+  }
+  .copy-btn:hover { background:var(--sand); color:var(--text); }
+
+  /* ── APP ── */
+  #app { display:none; position:relative; z-index:1; }
+
+  .topbar {
+    position:fixed; top:0; left:0; right:0; z-index:100;
+    background:rgba(249,240,236,0.93); backdrop-filter:blur(18px);
+    padding:13px 20px 11px;
+    display:flex; align-items:center; justify-content:space-between;
+    border-bottom:1px solid var(--warm-mid);
+  }
+  .topbar-logo { font-family:'DM Serif Display',serif; font-size:26px; color:var(--rose-deep); }
+  .topbar-logo em { font-style:italic; color:var(--text); }
+  .topbar-right { display:flex; align-items:center; gap:8px; }
+  .topbar-avatar {
+    width:32px; height:32px; border-radius:50%;
+    background:var(--rose); display:flex; align-items:center;
+    justify-content:center; font-size:16px;
+  }
+  .topbar-name { font-size:13px; color:var(--text-soft); }
+  .logout-btn {
+    background:none; border:none; font-size:11px; color:var(--text-muted);
+    cursor:pointer; padding:4px 6px; border-radius:6px;
+    font-family:'DM Sans',sans-serif; transition:color 0.2s;
+  }
+  .logout-btn:hover { color:var(--rose-deep); }
+
+  .feed {
+    padding:76px 0 96px; max-width:480px; margin:0 auto;
+  }
+  .feed-empty {
+    text-align:center; padding:80px 32px;
+  }
+  .feed-empty .ei { font-size:52px; margin-bottom:16px; }
+  .feed-empty p { font-size:15px; color:var(--text-muted); line-height:1.7; }
+
+  .post-card {
+    background:var(--card-bg); backdrop-filter:blur(8px);
+    border-radius:var(--radius); box-shadow:var(--shadow);
+    margin:0 14px 18px; overflow:hidden;
+    border:1px solid rgba(255,255,255,0.85);
+    animation:fadeUp 0.35s ease both;
+  }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+
+  .post-header {
+    display:flex; align-items:center; gap:10px;
+    padding:13px 14px 10px;
+  }
+  .post-avatar {
+    width:36px; height:36px; border-radius:50%;
+    background:var(--rose-light); display:flex;
+    align-items:center; justify-content:center; font-size:18px; flex-shrink:0;
+  }
+  .post-meta { flex:1; }
+  .post-author { font-size:14px; font-weight:500; }
+  .post-time { font-size:11px; color:var(--text-muted); }
+  .post-del {
+    background:none; border:none; font-size:15px; cursor:pointer;
+    opacity:0.35; padding:4px; border-radius:6px; transition:opacity 0.2s;
+  }
+  .post-del:hover { opacity:1; }
+
+  .post-img { width:100%; display:block; background:var(--warm-mid); }
+  .post-img-wrap { position:relative; background:var(--warm-mid); }
+  .post-img-loading {
+    position:absolute; inset:0; display:flex;
+    align-items:center; justify-content:center;
+    font-size:32px; color:var(--text-muted);
+  }
+
+  .post-body { padding:13px 14px 8px; }
+  .post-caption { font-size:14px; line-height:1.65; color:var(--text); margin-bottom:11px; }
+
+  /* Reactions */
+  .reactions-row {
+    display:flex; align-items:center; gap:5px;
+    flex-wrap:wrap; margin-bottom:9px;
+  }
+  .rxn-btn {
+    background:var(--warm); border:1.5px solid var(--warm-mid);
+    border-radius:20px; padding:5px 9px;
+    font-size:15px; cursor:pointer; transition:all 0.15s;
+    display:flex; align-items:center; gap:3px;
+    font-family:'DM Sans',sans-serif;
+  }
+  .rxn-btn .cnt { font-size:11px; color:var(--text-soft); }
+  .rxn-btn.mine { background:var(--rose-light); border-color:var(--rose); }
+  .rxn-btn:active { transform:scale(0.9); }
+  .add-rxn-btn {
+    background:none; border:1.5px dashed var(--warm-mid);
+    border-radius:20px; padding:5px 9px; font-size:15px;
+    cursor:pointer; color:var(--text-muted); transition:all 0.2s;
+  }
+  .add-rxn-btn:hover { border-color:var(--rose); color:var(--rose-deep); }
+
+  .emoji-picker {
+    display:none; flex-wrap:wrap; gap:4px;
+    padding:10px 12px; background:white;
+    border-top:1px solid var(--warm-mid);
+  }
+  .emoji-picker.open { display:flex; }
+  .ep-btn {
+    font-size:22px; cursor:pointer; padding:4px;
+    border-radius:8px; transition:transform 0.1s;
+    background:none; border:none;
+  }
+  .ep-btn:hover { transform:scale(1.3); }
+
+  /* Comments */
+  .comments-wrap { padding:0 14px 13px; }
+  .comment-item { display:flex; gap:8px; margin-bottom:7px; animation:fadeUp 0.25s ease both; }
+  .c-avatar {
+    width:26px; height:26px; border-radius:50%;
+    background:var(--rose-light); display:flex;
+    align-items:center; justify-content:center;
+    font-size:13px; flex-shrink:0; margin-top:2px;
+  }
+  .c-bubble {
+    background:var(--warm); border-radius:11px 11px 11px 3px;
+    padding:7px 11px; flex:1;
+  }
+  .c-author { font-size:11px; font-weight:500; color:var(--rose-deep); margin-bottom:2px; }
+  .c-text { font-size:13px; color:var(--text); line-height:1.5; }
+  .c-input-row { display:flex; gap:8px; align-items:center; margin-top:7px; }
+  .c-input {
+    flex:1; padding:9px 13px; border:1.5px solid var(--warm-mid);
+    border-radius:20px; background:var(--warm);
+    font-family:'DM Sans',sans-serif; font-size:13px; color:var(--text);
+    outline:none; transition:border 0.2s, background 0.2s;
+  }
+  .c-input:focus { border-color:var(--rose); background:white; }
+  .c-send {
+    background:var(--rose-deep); color:white; border:none; border-radius:50%;
+    width:33px; height:33px; display:flex; align-items:center;
+    justify-content:center; cursor:pointer; font-size:15px;
+    transition:background 0.2s; flex-shrink:0;
+  }
+  .c-send:hover { background:var(--text); }
+
+  /* Bottombar */
+  .bottombar {
+    position:fixed; bottom:0; left:0; right:0; z-index:100;
+    background:rgba(249,240,236,0.95); backdrop-filter:blur(18px);
+    border-top:1px solid var(--warm-mid);
+    padding:10px 20px 28px; display:flex; justify-content:center;
+  }
+  .new-post-btn {
+    background:var(--rose-deep); color:white; border:none; border-radius:50px;
+    padding:13px 34px; font-family:'DM Sans',sans-serif;
+    font-size:14px; font-weight:500; cursor:pointer;
+    display:flex; align-items:center; gap:8px;
+    box-shadow:0 4px 20px rgba(201,123,123,0.38);
+    transition:all 0.2s;
+  }
+  .new-post-btn:hover { background:var(--text); transform:translateY(-2px); }
+  .new-post-btn:active { transform:translateY(0); }
+
+  /* Modal */
+  .modal-overlay {
+    display:none; position:fixed; inset:0;
+    background:rgba(42,31,31,0.48);
+    z-index:200; align-items:flex-end;
+    backdrop-filter:blur(4px);
+  }
+  .modal-overlay.open { display:flex; }
+  .modal-sheet {
+    background:white; border-radius:24px 24px 0 0;
+    padding:22px 18px 40px; width:100%; max-width:480px;
+    margin:0 auto; animation:slideUp 0.28s ease;
+    max-height:90vh; overflow-y:auto;
+  }
+  @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+  .modal-handle { width:38px; height:4px; background:var(--warm-mid); border-radius:2px; margin:0 auto 18px; }
+  .modal-title { font-family:'DM Serif Display',serif; font-size:22px; margin-bottom:18px; }
+
+  .upload-zone {
+    border:2px dashed var(--sand); border-radius:16px;
+    padding:28px 16px; text-align:center; cursor:pointer;
+    transition:all 0.2s; margin-bottom:14px; background:var(--warm);
+    position:relative; overflow:hidden;
+  }
+  .upload-zone:hover { border-color:var(--rose-deep); background:var(--rose-light); }
+  .upload-zone input { position:absolute; inset:0; opacity:0; cursor:pointer; font-size:0; }
+  .upload-zone .uz-icon { font-size:34px; margin-bottom:6px; }
+  .upload-zone p { font-size:14px; color:var(--text-soft); }
+  .upload-preview { width:100%; border-radius:12px; margin-bottom:14px; display:none; max-height:240px; object-fit:cover; }
+
+  .modal-textarea {
+    width:100%; padding:13px 15px; border:1.5px solid var(--warm-mid);
+    border-radius:12px; background:var(--warm);
+    font-family:'DM Sans',sans-serif; font-size:14px; color:var(--text);
+    resize:none; outline:none; transition:border 0.2s, background 0.2s;
+    min-height:76px; margin-bottom:14px;
+  }
+  .modal-textarea:focus { border-color:var(--rose-deep); background:white; }
+
+  .upload-status { font-size:13px; color:var(--text-soft); text-align:center; padding:6px 0; display:none; }
+
+  .modal-actions { display:flex; gap:10px; }
+  .btn-cancel {
+    flex:1; padding:13px; background:var(--warm);
+    border:1.5px solid var(--warm-mid); border-radius:12px;
+    font-family:'DM Sans',sans-serif; font-size:14px;
+    cursor:pointer; color:var(--text-soft); transition:all 0.2s;
+  }
+  .btn-post {
+    flex:2; padding:13px; background:var(--rose-deep); color:white;
+    border:none; border-radius:12px; font-family:'DM Sans',sans-serif;
+    font-size:14px; font-weight:500; cursor:pointer; transition:all 0.2s;
+  }
+  .btn-post:hover { background:var(--text); }
+  .btn-post:disabled { background:var(--sand); cursor:not-allowed; }
+
+  code { background:var(--warm-mid); padding:2px 6px; border-radius:4px; font-size:11px; font-family:monospace; }
+  a { color:var(--rose-deep); }
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="auth-screen">
+  <div class="auth-logo">Me<em>&</em>U</div>
+  <div class="auth-tagline">notre monde à nous</div>
+  <div class="auth-card">
+    <h2>Bonjour 👋</h2>
+    <div class="user-picker">
+      <button class="user-btn active" onclick="selectUser('user1')" id="btn-u1">
+        <div class="user-avatar" id="av-u1">🌸</div>
+        <div class="user-name" id="nm-u1">Moi</div>
+      </button>
+      <button class="user-btn" onclick="selectUser('user2')" id="btn-u2">
+        <div class="user-avatar" id="av-u2">💛</div>
+        <div class="user-name" id="nm-u2">Toi</div>
+      </button>
+    </div>
+    <input class="auth-input" type="password" id="auth-pw" placeholder="Mot de passe…"
+           onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="auth-submit" onclick="doLogin()">Entrer ✨</button>
+    <div class="auth-error" id="auth-err"></div>
+  </div>
+</div>
+
+<!-- SETUP -->
+<div id="setup-screen">
+  <div class="setup-logo">Me<em>&</em>U</div>
+  <div class="setup-card">
+    <h2>⚙️ Première configuration</h2>
+    <p class="setup-intro">
+      Remplis les infos ci-dessous. L'outil génère un fichier <code>config.js</code>
+      à ajouter dans ton repo GitHub à côté de <code>index.html</code>.
+    </p>
+
+    <div class="setup-section">
+      <h3>🔑 GitHub</h3>
+      <div class="setup-field">
+        <label class="setup-label">Personal Access Token</label>
+        <input class="auth-input" type="password" id="s-token" placeholder="ghp_xxxxxxxxxxxx" style="margin-bottom:0">
+        <p class="setup-hint">
+          <a href="https://github.com/settings/tokens/new?scopes=repo&description=MeU-App" target="_blank">Crée un token ici</a>
+          — coche uniquement <code>repo</code>. Ce token permet d'écrire dans ton repo.
+        </p>
+      </div>
+      <div class="setup-field" style="margin-top:12px">
+        <label class="setup-label">Nom d'utilisateur GitHub</label>
+        <input class="auth-input" type="text" id="s-owner" placeholder="ton-pseudo" style="margin-bottom:0">
+      </div>
+      <div class="setup-field" style="margin-top:12px">
+        <label class="setup-label">Nom du repo</label>
+        <input class="auth-input" type="text" id="s-repo" placeholder="meu-app" style="margin-bottom:0">
+      </div>
+    </div>
+
+    <div class="setup-section">
+      <h3>👤 Compte 1 — toi</h3>
+      <div style="display:grid;grid-template-columns:1fr 80px;gap:10px">
+        <div class="setup-field">
+          <label class="setup-label">Prénom</label>
+          <input class="auth-input" type="text" id="s-n1" placeholder="Ex: Sarah" style="margin-bottom:0">
+        </div>
+        <div class="setup-field">
+          <label class="setup-label">Emoji</label>
+          <input class="auth-input" type="text" id="s-e1" placeholder="🌸" style="margin-bottom:0;text-align:center">
+        </div>
+      </div>
+      <div class="setup-field" style="margin-top:12px">
+        <label class="setup-label">Mot de passe</label>
+        <input class="auth-input" type="password" id="s-p1" placeholder="Choisis un mot de passe" style="margin-bottom:0">
+      </div>
+    </div>
+
+    <div class="setup-section">
+      <h3>👤 Compte 2 — ta copine</h3>
+      <div style="display:grid;grid-template-columns:1fr 80px;gap:10px">
+        <div class="setup-field">
+          <label class="setup-label">Prénom</label>
+          <input class="auth-input" type="text" id="s-n2" placeholder="Ex: Amina" style="margin-bottom:0">
+        </div>
+        <div class="setup-field">
+          <label class="setup-label">Emoji</label>
+          <input class="auth-input" type="text" id="s-e2" placeholder="💛" style="margin-bottom:0;text-align:center">
+        </div>
+      </div>
+      <div class="setup-field" style="margin-top:12px">
+        <label class="setup-label">Mot de passe</label>
+        <input class="auth-input" type="password" id="s-p2" placeholder="Choisis un mot de passe" style="margin-bottom:0">
+      </div>
+    </div>
+
+    <button class="btn-setup" onclick="generateConfig()">Générer config.js</button>
+
+    <div id="setup-result">
+      <span class="setup-result-title">📋 Copie ce contenu dans un fichier <code>config.js</code> et upload-le dans ton repo :</span>
+      <textarea id="setup-code" readonly></textarea>
+      <button class="copy-btn" onclick="copyConfig()">Copier le code</button>
+      <p class="setup-hint" style="margin-top:10px;text-align:center">
+        ⚠️ Le token est caché dans le code — garde ton repo <strong>privé</strong> si possible,<br>
+        ou utilise un token à droits limités.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-logo">Me<em>&</em>U</div>
+    <div class="topbar-right">
+      <span class="topbar-name" id="tb-name"></span>
+      <div class="topbar-avatar" id="tb-av"></div>
+      <button class="logout-btn" onclick="doLogout()">Déco</button>
+    </div>
+  </div>
+
+  <div class="feed" id="feed">
+    <div class="feed-empty" id="feed-empty">
+      <div class="ei">🌸</div>
+      <p>Votre fil est vide pour l'instant.<br>Sois la première à partager un moment !</p>
+    </div>
+  </div>
+
+  <div class="bottombar">
+    <button class="new-post-btn" onclick="openModal()">
+      <span style="font-size:20px;line-height:1">+</span> Nouveau moment
+    </button>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal" onclick="bgClose(event)">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Partager un moment ✨</div>
+    <div class="upload-zone" id="uz">
+      <input type="file" accept="image/*" id="file-in" onchange="previewImg(event)">
+      <div class="uz-icon">📷</div>
+      <p>Touche pour choisir une photo</p>
+    </div>
+    <img id="preview" class="upload-preview" alt="">
+    <textarea class="modal-textarea" id="caption" placeholder="Dis quelque chose de beau… 💕"></textarea>
+    <div class="upload-status" id="up-status"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Annuler</button>
+      <button class="btn-post" id="btn-post" onclick="submitPost()">Publier 🌸</button>
+    </div>
+  </div>
+</div>
+
+<template id="ep-tpl">
+  <div class="emoji-picker" id="ep-ID">
+    <button class="ep-btn" data-e="❤️">❤️</button>
+    <button class="ep-btn" data-e="😍">😍</button>
+    <button class="ep-btn" data-e="😂">😂</button>
+    <button class="ep-btn" data-e="🥺">🥺</button>
+    <button class="ep-btn" data-e="🔥">🔥</button>
+    <button class="ep-btn" data-e="🌸">🌸</button>
+    <button class="ep-btn" data-e="✨">✨</button>
+    <button class="ep-btn" data-e="💛">💛</button>
+    <button class="ep-btn" data-e="🎉">🎉</button>
+    <button class="ep-btn" data-e="🥰">🥰</button>
+    <button class="ep-btn" data-e="😘">😘</button>
+    <button class="ep-btn" data-e="👏">👏</button>
+  </div>
+</template>
+
+<script>
+// ══════════════════════════════════════════
+// CONFIG — injectée par config.js
+// ══════════════════════════════════════════
+window.CFG = null; // sera défini par config.js
+
+const cfgScript = document.createElement('script');
+cfgScript.src = 'config.js';
+cfgScript.onload = () => { if (window.CFG) bootAuth(); else showSetup(); };
+cfgScript.onerror = () => showSetup();
+document.head.appendChild(cfgScript);
+
+// ══════════════════════════════════════════
+// ÉTAT
+// ══════════════════════════════════════════
+let ME = null;   // utilisateur connecté
+let POSTS = [];  // tableau des posts
+let DATA_SHA = null; // SHA du data.json pour l'update GitHub
+
+// ══════════════════════════════════════════
+// SETUP
+// ══════════════════════════════════════════
+function showSetup() {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('setup-screen').style.display = 'flex';
+}
+
+async function generateConfig() {
+  const token  = document.getElementById('s-token').value.trim();
+  const owner  = document.getElementById('s-owner').value.trim();
+  const repo   = document.getElementById('s-repo').value.trim();
+  const n1     = document.getElementById('s-n1').value.trim() || 'Moi';
+  const e1     = document.getElementById('s-e1').value.trim() || '🌸';
+  const p1     = document.getElementById('s-p1').value;
+  const n2     = document.getElementById('s-n2').value.trim() || 'Toi';
+  const e2     = document.getElementById('s-e2').value.trim() || '💛';
+  const p2     = document.getElementById('s-p2').value;
+
+  if (!token || !owner || !repo || !p1 || !p2) {
+    alert('Remplis tous les champs !'); return;
+  }
+
+  const h1 = await sha256(p1);
+  const h2 = await sha256(p2);
+
+  const code = `// Me&U — Config
+// Garde ce fichier en sécurité (repo privé recommandé)
+window.CFG = {
+  token: "${token}",
+  owner: "${owner}",
+  repo:  "${repo}",
+  users: {
+    user1: { name: "${n1}", emoji: "${e1}", hash: "${h1}" },
+    user2: { name: "${n2}", emoji: "${e2}", hash: "${h2}" }
+  }
+};`;
+
+  const out = document.getElementById('setup-result');
+  document.getElementById('setup-code').value = code;
+  out.style.display = 'block';
+  out.scrollIntoView({ behavior: 'smooth' });
+}
+
+function copyConfig() {
+  const ta = document.getElementById('setup-code');
+  ta.select();
+  document.execCommand('copy');
+  const btn = document.querySelector('.copy-btn');
+  btn.textContent = '✓ Copié !';
+  setTimeout(() => btn.textContent = 'Copier le code', 2000);
+}
+
+// ══════════════════════════════════════════
+// AUTH BOOT
+// ══════════════════════════════════════════
+function bootAuth() {
+  const u = CFG.users;
+  document.getElementById('nm-u1').textContent = u.user1.name;
+  document.getElementById('nm-u2').textContent = u.user2.name;
+  document.getElementById('av-u1').textContent = u.user1.emoji;
+  document.getElementById('av-u2').textContent = u.user2.emoji;
+  document.getElementById('auth-screen').style.display = 'flex';
+}
+
+let selectedUid = 'user1';
+function selectUser(uid) {
+  selectedUid = uid;
+  ['user1','user2'].forEach(u => {
+    document.getElementById(`btn-${u==='user1'?'u1':'u2'}`).classList.toggle('active', u === uid);
+  });
+  document.getElementById('auth-pw').value = '';
+  document.getElementById('auth-err').textContent = '';
+}
+
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+async function doLogin() {
+  const pw = document.getElementById('auth-pw').value;
+  if (!pw) { document.getElementById('auth-err').textContent = 'Entre ton mot de passe 🌸'; return; }
+  const hash = await sha256(pw);
+  const user = CFG.users[selectedUid];
+  if (hash === user.hash) {
+    ME = { id: selectedUid, ...user };
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('tb-name').textContent = ME.name;
+    document.getElementById('tb-av').textContent = ME.emoji;
+    document.getElementById('app').style.display = 'block';
+    await loadPosts();
+  } else {
+    document.getElementById('auth-err').textContent = 'Mot de passe incorrect ✗';
+    document.getElementById('auth-pw').value = '';
+  }
+}
+
+function doLogout() {
+  ME = null; POSTS = []; DATA_SHA = null;
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('auth-pw').value = '';
+  document.getElementById('auth-err').textContent = '';
+  document.getElementById('feed').querySelectorAll('.post-card').forEach(c => c.remove());
+  document.getElementById('feed-empty').style.display = 'block';
+}
+
+// ══════════════════════════════════════════
+// GITHUB API HELPERS
+// ══════════════════════════════════════════
+const GH = () => ({
+  base: `https://api.github.com/repos/${CFG.owner}/${CFG.repo}/contents`,
+  headers: {
+    Authorization: `token ${CFG.token}`,
+    Accept: 'application/vnd.github.v3+json',
+    'Content-Type': 'application/json'
+  }
+});
+
+async function ghGet(path) {
+  const { base, headers } = GH();
+  const r = await fetch(`${base}/${path}`, { headers });
+  if (r.status === 404) return null;
+  if (!r.ok) throw new Error(`GitHub GET ${path}: ${r.status}`);
+  return r.json();
+}
+
+async function ghPut(path, content, sha, message) {
+  const { base, headers } = GH();
+  const body = { message, content: btoa(unescape(encodeURIComponent(content))) };
+  if (sha) body.sha = sha;
+  const r = await fetch(`${base}/${path}`, {
+    method: 'PUT', headers, body: JSON.stringify(body)
+  });
+  if (!r.ok) throw new Error(`GitHub PUT ${path}: ${r.status}`);
+  return r.json();
+}
+
+async function ghPutBinary(path, arrayBuffer, sha, message) {
+  const { base, headers } = GH();
+  const bytes = new Uint8Array(arrayBuffer);
+  let binary = '';
+  bytes.forEach(b => binary += String.fromCharCode(b));
+  const content = btoa(binary);
+  const body = { message, content };
+  if (sha) body.sha = sha;
+  const r = await fetch(`${base}/${path}`, {
+    method: 'PUT', headers, body: JSON.stringify(body)
+  });
+  if (!r.ok) throw new Error(`GitHub PUT binary ${path}: ${r.status}`);
+  return r.json();
+}
+
+// ══════════════════════════════════════════
+// DATA.JSON
+// ══════════════════════════════════════════
+async function loadPosts() {
+  try {
+    const file = await ghGet('data.json');
+    if (file) {
+      DATA_SHA = file.sha;
+      const json = decodeURIComponent(escape(atob(file.content.replace(/\n/g,''))));
+      POSTS = JSON.parse(json).posts || [];
+    } else {
+      // Crée data.json vide
+      const res = await ghPut('data.json', '{"posts":[]}', null, 'Init data.json');
+      DATA_SHA = res.content.sha;
+      POSTS = [];
+    }
+  } catch(e) {
+    console.error(e);
+    POSTS = [];
+  }
+  renderFeed();
+}
+
+async function savePosts() {
+  const json = JSON.stringify({ posts: POSTS }, null, 2);
+  const res = await ghPut('data.json', json, DATA_SHA, 'Update posts');
+  DATA_SHA = res.content.sha;
+}
+
+// ══════════════════════════════════════════
+// FEED
+// ══════════════════════════════════════════
+function renderFeed() {
+  const feed = document.getElementById('feed');
+  feed.querySelectorAll('.post-card').forEach(c => c.remove());
+  if (!POSTS.length) { document.getElementById('feed-empty').style.display = 'block'; return; }
+  document.getElementById('feed-empty').style.display = 'none';
+  [...POSTS].sort((a,b) => b.ts - a.ts).forEach(p => feed.appendChild(buildCard(p)));
+}
+
+function buildCard(post) {
+  const div = document.createElement('div');
+  div.className = 'post-card';
+  div.id = `card-${post.id}`;
+
+  const author = CFG.users[post.userId];
+  const isOwn = post.userId === ME.id;
+  const ts = new Date(post.ts).toLocaleDateString('fr-FR', {
+    day:'numeric', month:'long', hour:'2-digit', minute:'2-digit'
+  });
+
+  // Reactions map
+  const rxMap = {};
+  (post.reactions || []).forEach(r => {
+    if (!rxMap[r.emoji]) rxMap[r.emoji] = { count:0, mine:false };
+    rxMap[r.emoji].count++;
+    if (r.userId === ME.id) rxMap[r.emoji].mine = true;
+  });
+  const rxBtns = Object.entries(rxMap).map(([e,v]) =>
+    `<button class="rxn-btn${v.mine?' mine':''}" onclick="toggleRxn('${post.id}','${e}')">${e}<span class="cnt">${v.count>1?v.count:''}</span></button>`
+  ).join('');
+
+  const comments = (post.comments || []).map(c => {
+    const cu = CFG.users[c.userId];
+    return `<div class="comment-item">
+      <div class="c-avatar">${cu.emoji}</div>
+      <div class="c-bubble">
+        <div class="c-author">${cu.name}</div>
+        <div class="c-text">${esc(c.text)}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const imgHtml = post.imgPath
+    ? `<div class="post-img-wrap">
+         <div class="post-img-loading" id="il-${post.id}">🌸</div>
+         <img class="post-img" src="https://raw.githubusercontent.com/${CFG.owner}/${CFG.repo}/main/${post.imgPath}"
+              alt="photo" loading="lazy"
+              onload="document.getElementById('il-${post.id}')?.remove()"
+              onerror="this.parentElement.innerHTML='<div style=\'padding:40px;text-align:center;color:var(--text-muted)\'>📷</div>'">
+       </div>`
+    : '';
+
+  div.innerHTML = `
+    <div class="post-header">
+      <div class="post-avatar">${author.emoji}</div>
+      <div class="post-meta">
+        <div class="post-author">${author.name}</div>
+        <div class="post-time">${ts}</div>
+      </div>
+      ${isOwn ? `<button class="post-del" onclick="deletePost('${post.id}')" title="Supprimer">🗑</button>` : ''}
+    </div>
+    ${imgHtml}
+    <div class="post-body">
+      ${post.caption ? `<div class="post-caption">${esc(post.caption)}</div>` : ''}
+      <div class="reactions-row" id="rxrow-${post.id}">
+        ${rxBtns}
+        <button class="add-rxn-btn" onclick="togglePicker('${post.id}')">＋</button>
+      </div>
+    </div>
+    <div id="epwrap-${post.id}"></div>
+    <div class="comments-wrap">
+      <div id="cmts-${post.id}">${comments}</div>
+      <div class="c-input-row">
+        <input class="c-input" type="text" placeholder="Un commentaire…" id="ci-${post.id}"
+               onkeydown="if(event.key==='Enter')sendComment('${post.id}')">
+        <button class="c-send" onclick="sendComment('${post.id}')">↑</button>
+      </div>
+    </div>`;
+  return div;
+}
+
+function esc(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+}
+
+// ══════════════════════════════════════════
+// REACTIONS
+// ══════════════════════════════════════════
+function togglePicker(pid) {
+  const wrap = document.getElementById(`epwrap-${pid}`);
+  let picker = document.getElementById(`ep-${pid}`);
+  if (!picker) {
+    const html = document.getElementById('ep-tpl').innerHTML.replaceAll('ID', pid);
+    wrap.innerHTML = html;
+    picker = document.getElementById(`ep-${pid}`);
+    picker.querySelectorAll('.ep-btn').forEach(btn => {
+      btn.addEventListener('click', () => toggleRxn(pid, btn.dataset.e));
+    });
+  }
+  picker.classList.toggle('open');
+}
+
+async function toggleRxn(pid, emoji) {
+  const post = POSTS.find(p => p.id === pid); if (!post) return;
+  post.reactions = post.reactions || [];
+  const idx = post.reactions.findIndex(r => r.userId === ME.id && r.emoji === emoji);
+  if (idx >= 0) post.reactions.splice(idx,1);
+  else post.reactions.push({ userId: ME.id, emoji });
+
+  document.getElementById(`ep-${pid}`)?.classList.remove('open');
+
+  // Optimistic UI update
+  const rxMap = {};
+  post.reactions.forEach(r => {
+    if (!rxMap[r.emoji]) rxMap[r.emoji] = { count:0, mine:false };
+    rxMap[r.emoji].count++;
+    if (r.userId === ME.id) rxMap[r.emoji].mine = true;
+  });
+  const row = document.getElementById(`rxrow-${pid}`);
+  if (row) {
+    row.innerHTML = Object.entries(rxMap).map(([e,v]) =>
+      `<button class="rxn-btn${v.mine?' mine':''}" onclick="toggleRxn('${pid}','${e}')">${e}<span class="cnt">${v.count>1?v.count:''}</span></button>`
+    ).join('') + `<button class="add-rxn-btn" onclick="togglePicker('${pid}')">＋</button>`;
+  }
+
+  await savePosts();
+}
+
+// ══════════════════════════════════════════
+// COMMENTS
+// ══════════════════════════════════════════
+async function sendComment(pid) {
+  const input = document.getElementById(`ci-${pid}`);
+  const text = input.value.trim(); if (!text) return;
+  input.value = '';
+
+  const post = POSTS.find(p => p.id === pid); if (!post) return;
+  post.comments = post.comments || [];
+  const comment = { userId: ME.id, text, ts: Date.now() };
+  post.comments.push(comment);
+
+  // Optimistic UI
+  const div = document.createElement('div');
+  div.className = 'comment-item';
+  div.innerHTML = `
+    <div class="c-avatar">${ME.emoji}</div>
+    <div class="c-bubble">
+      <div class="c-author">${ME.name}</div>
+      <div class="c-text">${esc(text)}</div>
+    </div>`;
+  document.getElementById(`cmts-${pid}`).appendChild(div);
+
+  await savePosts();
+}
+
+// ══════════════════════════════════════════
+// NEW POST
+// ══════════════════════════════════════════
+let pickedFile = null;
+
+function openModal() { document.getElementById('modal').classList.add('open'); }
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  document.getElementById('caption').value = '';
+  document.getElementById('file-in').value = '';
+  document.getElementById('preview').style.display = 'none';
+  document.getElementById('uz').style.display = 'block';
+  document.getElementById('up-status').style.display = 'none';
+  document.getElementById('btn-post').disabled = false;
+  pickedFile = null;
+}
+function bgClose(e) { if (e.target === e.currentTarget) closeModal(); }
+
+function previewImg(e) {
+  pickedFile = e.target.files[0]; if (!pickedFile) return;
+  const prev = document.getElementById('preview');
+  prev.src = URL.createObjectURL(pickedFile);
+  prev.style.display = 'block';
+  document.getElementById('uz').style.display = 'none';
+}
+
+function setStatus(msg) {
+  const el = document.getElementById('up-status');
+  el.textContent = msg;
+  el.style.display = msg ? 'block' : 'none';
+}
+
+async function submitPost() {
+  const caption = document.getElementById('caption').value.trim();
+  if (!pickedFile && !caption) return;
+
+  document.getElementById('btn-post').disabled = true;
+  let imgPath = null;
+
+  if (pickedFile) {
+    setStatus('⏳ Upload de la photo…');
+    try {
+      const ext = pickedFile.name.split('.').pop().toLowerCase();
+      imgPath = `photos/${Date.now()}_${Math.random().toString(36).slice(2,6)}.${ext}`;
+      const buf = await pickedFile.arrayBuffer();
+      // Check if file already exists (shouldn't but just in case)
+      const existing = await ghGet(imgPath);
+      await ghPutBinary(imgPath, buf, existing?.sha || null, `Photo: ${imgPath}`);
+    } catch(e) {
+      setStatus('❌ Erreur upload. Réessaie.');
+      document.getElementById('btn-post').disabled = false;
+      return;
+    }
+  }
+
+  setStatus('💾 Sauvegarde…');
+  const post = {
+    id: `p${Date.now()}${Math.random().toString(36).slice(2,5)}`,
+    userId: ME.id,
+    caption,
+    imgPath,
+    ts: Date.now(),
+    reactions: [],
+    comments: []
+  };
+
+  POSTS.unshift(post);
+  await savePosts();
+  closeModal();
+  renderFeed();
+}
+
+// ══════════════════════════════════════════
+// DELETE
+// ══════════════════════════════════════════
+async function deletePost(pid) {
+  if (!confirm('Supprimer ce moment ?')) return;
+  POSTS = POSTS.filter(p => p.id !== pid);
+  document.getElementById(`card-${pid}`)?.remove();
+  if (!POSTS.length) document.getElementById('feed-empty').style.display = 'block';
+  await savePosts();
+}
+</script>
+</body>
+</html>
