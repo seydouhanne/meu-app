@@ -16,7 +16,13 @@
       "imgPath": "photos/1776025168600_82ov.jpg",
       "ts": 1776025176412,
       "reactions": [],
-      "comments": []
+      "comments": [
+        {
+          "userId": "user1",
+          "text": "Prettiest human ever",
+          "ts": 1776029860922
+        }
+      ]
     }
   ]
 }
