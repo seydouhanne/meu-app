@@ -37,6 +37,11 @@
           "userId": "user1",
           "text": "Tu me draaaagues",
           "ts": 1776031726460
+        },
+        {
+          "userId": "user2",
+          "text": "Dis oui",
+          "ts": 1776032674024
         }
       ]
     },
