@@ -1,1 +1,13 @@
-{"posts":[]}
+{
+  "posts": [
+    {
+      "id": "p1776024680386gxb",
+      "userId": "user1",
+      "caption": "Beau hein",
+      "imgPath": "photos/1776024648374_c055.jpg",
+      "ts": 1776024680386,
+      "reactions": [],
+      "comments": []
+    }
+  ]
+}
