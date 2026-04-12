@@ -12,7 +12,13 @@
           "emoji": "❤️"
         }
       ],
-      "comments": []
+      "comments": [
+        {
+          "userId": "user1",
+          "text": "Edhdjd",
+          "ts": 1776024727783
+        }
+      ]
     }
   ]
 }
