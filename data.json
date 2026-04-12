@@ -12,7 +12,13 @@
           "emoji": "❤️"
         }
       ],
-      "comments": []
+      "comments": [
+        {
+          "userId": "user1",
+          "text": "Mon chouchouuuw",
+          "ts": 1776031645855
+        }
+      ]
     },
     {
       "id": "p1776025176412zie",
