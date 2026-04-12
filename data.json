@@ -1,3 +1,13 @@
 {
-  "posts": []
+  "posts": [
+    {
+      "id": "p1776025176412zie",
+      "userId": "user1",
+      "caption": "mignoooon moi 😎",
+      "imgPath": "photos/1776025168600_82ov.jpg",
+      "ts": 1776025176412,
+      "reactions": [],
+      "comments": []
+    }
+  ]
 }
