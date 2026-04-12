@@ -6,7 +6,12 @@
       "caption": "Hhhhhhhh",
       "imgPath": "photos/1776031562925_662g.jpeg",
       "ts": 1776031570469,
-      "reactions": [],
+      "reactions": [
+        {
+          "userId": "user1",
+          "emoji": "❤️"
+        }
+      ],
       "comments": []
     },
     {
