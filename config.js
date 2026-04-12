@@ -1,7 +1,7 @@
 // Me&U — Config
 // Garde ce fichier en sécurité (repo privé recommandé)
 window.CFG = {
-  token: "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",
+  token: "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",
   owner: "seydouhanne",
   repo:  "meu-app",
   users: {
