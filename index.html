@@ -663,7 +663,7 @@ function doLogout() {
 // GITHUB API HELPERS
 // ══════════════════════════════════════════
 function getToken() {
-  if (CFG._tk) return atob(CFG._tk.reverse().join(''));
+  if (CFG._tk) return atob([...CFG._tk].reverse().join(''));
   return CFG.token || '';
 }
 
