@@ -207,22 +207,27 @@
   }
   .post-del:hover { opacity:1; }
 
-  /* ── IMAGE — recadrée proprement ── */
+  /* ── IMAGE ── */
   .post-img-wrap {
     position:relative;
     width:100%;
-    /* Hauteur fixe pour que toutes les images aient la même taille */
     height:280px;
     background:var(--warm-mid);
     overflow:hidden;
+    /* Curseur zoom pour indiquer le clic */
+    cursor:zoom-in;
   }
   .post-img {
     width:100%;
     height:100%;
     display:block;
-    /* object-fit:cover recadre l'image sans la déformer ni la couper de façon bizarre */
     object-fit:cover;
     object-position:center;
+    transition: transform 0.25s ease;
+  }
+  /* Légère animation au survol */
+  .post-img-wrap:hover .post-img {
+    transform: scale(1.03);
   }
   .post-img-loading {
     position:absolute; inset:0; display:flex;
@@ -231,6 +236,62 @@
     background:var(--warm-mid);
   }
 
+  /* ── LIGHTBOX ── */
+  #lightbox {
+    display: none;
+    position: fixed; inset: 0; z-index: 500;
+    background: rgba(20, 10, 10, 0.92);
+    align-items: center; justify-content: center;
+    backdrop-filter: blur(10px);
+    animation: lbIn 0.22s ease;
+    cursor: zoom-out;
+  }
+  #lightbox.open { display: flex; }
+
+  @keyframes lbIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  #lightbox-img {
+    max-width: 96vw;
+    max-height: 90vh;
+    object-fit: contain;
+    border-radius: 14px;
+    box-shadow: 0 12px 60px rgba(0,0,0,0.55);
+    animation: lbImgIn 0.25s cubic-bezier(0.22,1,0.36,1);
+    cursor: default;
+    /* Empêche le clic sur l'image de fermer */
+    pointer-events: none;
+  }
+  @keyframes lbImgIn {
+    from { transform: scale(0.88); opacity: 0; }
+    to   { transform: scale(1);    opacity: 1; }
+  }
+
+  /* Bouton fermer */
+  #lightbox-close {
+    position: fixed;
+    top: 18px; right: 18px;
+    width: 42px; height: 42px;
+    background: rgba(255,255,255,0.15);
+    border: 1.5px solid rgba(255,255,255,0.25);
+    border-radius: 50%;
+    color: white;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s, transform 0.2s;
+    backdrop-filter: blur(6px);
+    z-index: 501;
+  }
+  #lightbox-close:hover {
+    background: rgba(255,255,255,0.28);
+    transform: scale(1.1);
+  }
+
+  /* Post body */
   .post-body { padding:13px 14px 8px; }
   .post-caption { font-size:14px; line-height:1.65; color:var(--text); margin-bottom:11px; }
 
@@ -271,8 +332,6 @@
 
   /* ── COMMENTS ── */
   .comments-wrap { padding:0 14px 13px; }
-
-  /* Bouton toggle commentaires */
   .comments-toggle {
     display:flex; align-items:center; gap:6px;
     background:none; border:none; cursor:pointer;
@@ -281,18 +340,10 @@
     transition:color 0.2s;
   }
   .comments-toggle:hover { color:var(--rose-deep); }
-  .comments-toggle .ct-arrow {
-    display:inline-block; transition:transform 0.2s; font-size:10px;
-  }
+  .comments-toggle .ct-arrow { display:inline-block; transition:transform 0.2s; font-size:10px; }
   .comments-toggle.open .ct-arrow { transform:rotate(180deg); }
-
-  /* Liste de commentaires — masquée par défaut */
-  .comments-list {
-    display:none; /* caché par défaut */
-    overflow:hidden;
-  }
+  .comments-list { display:none; overflow:hidden; }
   .comments-list.open { display:block; }
-
   .comment-item { display:flex; gap:8px; margin-bottom:7px; animation:fadeUp 0.25s ease both; }
   .c-avatar {
     width:26px; height:26px; border-radius:50%;
@@ -370,7 +421,6 @@
   .upload-zone p { font-size:14px; color:var(--text-soft); }
   .upload-preview {
     width:100%; border-radius:12px; margin-bottom:14px; display:none;
-    /* Hauteur fixe pour la preview aussi */
     height:220px; object-fit:cover;
   }
 
@@ -534,6 +584,12 @@
   </div>
 </div>
 
+<!-- ══ LIGHTBOX ══ -->
+<div id="lightbox" onclick="closeLightbox()">
+  <button id="lightbox-close" onclick="closeLightbox()" aria-label="Fermer">✕</button>
+  <img id="lightbox-img" src="" alt="Photo agrandie">
+</div>
+
 <!-- MODAL -->
 <div class="modal-overlay" id="modal" onclick="bgClose(event)">
   <div class="modal-sheet">
@@ -589,6 +645,33 @@ document.head.appendChild(cfgScript);
 let ME = null;
 let POSTS = [];
 let DATA_SHA = null;
+
+// ══════════════════════════════════════════
+// LIGHTBOX
+// ══════════════════════════════════════════
+function openLightbox(src) {
+  const lb  = document.getElementById('lightbox');
+  const img = document.getElementById('lightbox-img');
+  img.src = src;
+  lb.classList.add('open');
+  // Fermeture avec Échap
+  document.addEventListener('keydown', lbKeyClose);
+  // Empêche le scroll derrière
+  document.body.style.overflow = 'hidden';
+}
+
+function closeLightbox() {
+  const lb = document.getElementById('lightbox');
+  lb.classList.remove('open');
+  document.removeEventListener('keydown', lbKeyClose);
+  document.body.style.overflow = '';
+  // On vide le src après l'animation
+  setTimeout(() => { document.getElementById('lightbox-img').src = ''; }, 200);
+}
+
+function lbKeyClose(e) {
+  if (e.key === 'Escape') closeLightbox();
+}
 
 // ══════════════════════════════════════════
 // SETUP
@@ -843,21 +926,25 @@ function buildCard(post) {
     </div>`;
   }).join('');
 
-  // Libellé du bouton toggle commentaires
   const toggleLabel = cmtCount === 0
     ? 'Ajouter un commentaire'
     : cmtCount === 1
       ? 'Voir 1 commentaire'
       : `Voir ${cmtCount} commentaires`;
 
-  const imgHtml = post.imgPath
-    ? `<div class="post-img-wrap">
+  // ── Image avec onclick lightbox ──
+  const imgSrc = post.imgPath
+    ? `https://raw.githubusercontent.com/${CFG.owner}/${CFG.repo}/main/${post.imgPath}`
+    : null;
+
+  const imgHtml = imgSrc
+    ? `<div class="post-img-wrap" onclick="openLightbox('${imgSrc}')" title="Voir en grand">
          <div class="post-img-loading" id="il-${post.id}">🌸</div>
          <img class="post-img"
-              src="https://raw.githubusercontent.com/${CFG.owner}/${CFG.repo}/main/${post.imgPath}"
+              src="${imgSrc}"
               alt="photo" loading="lazy"
               onload="document.getElementById('il-${post.id}')?.remove()"
-              onerror="this.parentElement.innerHTML='<div style=\'padding:40px;text-align:center;color:var(--text-muted)\'>📷</div>'">
+              onerror="this.parentElement.innerHTML='<div style=\\'padding:40px;text-align:center;color:var(--text-muted)\\'>📷</div>'">
        </div>`
     : '';
 
@@ -907,14 +994,11 @@ function toggleComments(pid) {
   const btn  = document.getElementById(`ctbtn-${pid}`);
   const isOpen = list.classList.toggle('open');
   btn.classList.toggle('open', isOpen);
-
-  // Focus sur l'input si on ouvre
   if (isOpen) {
     setTimeout(() => document.getElementById(`ci-${pid}`)?.focus(), 100);
   }
 }
 
-// Ouvre automatiquement les commentaires après en avoir ajouté un
 function openComments(pid) {
   const list = document.getElementById(`cmts-${pid}`);
   const btn  = document.getElementById(`ctbtn-${pid}`);
@@ -990,7 +1074,6 @@ async function sendComment(pid) {
   const comment = { userId: ME.id, text, ts: Date.now() };
   post.comments.push(comment);
 
-  // Optimistic UI — insère avant le champ de saisie
   const inputRow = input.closest('.c-input-row');
   const div = document.createElement('div');
   div.className = 'comment-item';
@@ -1002,7 +1085,6 @@ async function sendComment(pid) {
     </div>`;
   inputRow.parentNode.insertBefore(div, inputRow);
 
-  // Met à jour le libellé du bouton et garde ouvert
   updateCommentToggleLabel(pid);
   openComments(pid);
 
