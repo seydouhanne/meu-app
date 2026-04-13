@@ -31,7 +31,12 @@
       "caption": "New me😁",
       "imgPath": "photos/1776031990331_y69c.jpg",
       "ts": 1776032004607,
-      "reactions": [],
+      "reactions": [
+        {
+          "userId": "user2",
+          "emoji": "❤️"
+        }
+      ],
       "comments": [
         {
           "userId": "user2",
