@@ -30,6 +30,10 @@
         {
           "userId": "user2",
           "emoji": "❤️"
+        },
+        {
+          "userId": "user1",
+          "emoji": "❤️"
         }
       ],
       "comments": []
