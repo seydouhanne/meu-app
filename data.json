@@ -22,6 +22,11 @@
           "userId": "user2",
           "text": "T’es jaloux tu veux prendre sa place",
           "ts": 1776039184250
+        },
+        {
+          "userId": "user1",
+          "text": "Oui😣",
+          "ts": 1776039268845
         }
       ]
     },
