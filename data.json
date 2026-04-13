@@ -86,7 +86,12 @@
       "caption": "mignoooon moi 😎",
       "imgPath": "photos/1776025168600_82ov.jpg",
       "ts": 1776025176412,
-      "reactions": [],
+      "reactions": [
+        {
+          "userId": "user2",
+          "emoji": "❤️"
+        }
+      ],
       "comments": [
         {
           "userId": "user1",
