@@ -1,6 +1,15 @@
 {
   "posts": [
     {
+      "id": "p17760813837983ih",
+      "userId": "user1",
+      "caption": "Dirty mirror Dirty mind",
+      "imgPath": "photos/1776081373236_0cqj.jpg",
+      "ts": 1776081383798,
+      "reactions": [],
+      "comments": []
+    },
+    {
       "id": "p1776038947442wcv",
       "userId": "user2",
       "caption": "Bonne nuit with my baby❤️",
