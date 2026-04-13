@@ -6,7 +6,12 @@
       "caption": "Dirty mirror Dirty mind",
       "imgPath": "photos/1776081373236_0cqj.jpg",
       "ts": 1776081383798,
-      "reactions": [],
+      "reactions": [
+        {
+          "userId": "user2",
+          "emoji": "❤️"
+        }
+      ],
       "comments": []
     },
     {
