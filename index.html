@@ -207,12 +207,28 @@
   }
   .post-del:hover { opacity:1; }
 
-  .post-img { width:100%; display:block; background:var(--warm-mid); }
-  .post-img-wrap { position:relative; background:var(--warm-mid); }
+  /* ── IMAGE — recadrée proprement ── */
+  .post-img-wrap {
+    position:relative;
+    width:100%;
+    /* Hauteur fixe pour que toutes les images aient la même taille */
+    height:280px;
+    background:var(--warm-mid);
+    overflow:hidden;
+  }
+  .post-img {
+    width:100%;
+    height:100%;
+    display:block;
+    /* object-fit:cover recadre l'image sans la déformer ni la couper de façon bizarre */
+    object-fit:cover;
+    object-position:center;
+  }
   .post-img-loading {
     position:absolute; inset:0; display:flex;
     align-items:center; justify-content:center;
     font-size:32px; color:var(--text-muted);
+    background:var(--warm-mid);
   }
 
   .post-body { padding:13px 14px 8px; }
@@ -253,8 +269,30 @@
   }
   .ep-btn:hover { transform:scale(1.3); }
 
-  /* Comments */
+  /* ── COMMENTS ── */
   .comments-wrap { padding:0 14px 13px; }
+
+  /* Bouton toggle commentaires */
+  .comments-toggle {
+    display:flex; align-items:center; gap:6px;
+    background:none; border:none; cursor:pointer;
+    font-family:'DM Sans',sans-serif; font-size:12px;
+    color:var(--text-muted); padding:4px 0 8px;
+    transition:color 0.2s;
+  }
+  .comments-toggle:hover { color:var(--rose-deep); }
+  .comments-toggle .ct-arrow {
+    display:inline-block; transition:transform 0.2s; font-size:10px;
+  }
+  .comments-toggle.open .ct-arrow { transform:rotate(180deg); }
+
+  /* Liste de commentaires — masquée par défaut */
+  .comments-list {
+    display:none; /* caché par défaut */
+    overflow:hidden;
+  }
+  .comments-list.open { display:block; }
+
   .comment-item { display:flex; gap:8px; margin-bottom:7px; animation:fadeUp 0.25s ease both; }
   .c-avatar {
     width:26px; height:26px; border-radius:50%;
@@ -268,7 +306,7 @@
   }
   .c-author { font-size:11px; font-weight:500; color:var(--rose-deep); margin-bottom:2px; }
   .c-text { font-size:13px; color:var(--text); line-height:1.5; }
-  .c-input-row { display:flex; gap:8px; align-items:center; margin-top:7px; }
+  .c-input-row { display:flex; gap:8px; align-items:center; margin-top:4px; }
   .c-input {
     flex:1; padding:9px 13px; border:1.5px solid var(--warm-mid);
     border-radius:20px; background:var(--warm);
@@ -330,7 +368,11 @@
   .upload-zone input { position:absolute; inset:0; opacity:0; cursor:pointer; font-size:0; }
   .upload-zone .uz-icon { font-size:34px; margin-bottom:6px; }
   .upload-zone p { font-size:14px; color:var(--text-soft); }
-  .upload-preview { width:100%; border-radius:12px; margin-bottom:14px; display:none; max-height:240px; object-fit:cover; }
+  .upload-preview {
+    width:100%; border-radius:12px; margin-bottom:14px; display:none;
+    /* Hauteur fixe pour la preview aussi */
+    height:220px; object-fit:cover;
+  }
 
   .modal-textarea {
     width:100%; padding:13px 15px; border:1.5px solid var(--warm-mid);
@@ -533,7 +575,7 @@
 // ══════════════════════════════════════════
 // CONFIG — injectée par config.js
 // ══════════════════════════════════════════
-window.CFG = null; // sera défini par config.js
+window.CFG = null;
 
 const cfgScript = document.createElement('script');
 cfgScript.src = 'config.js';
@@ -544,9 +586,9 @@ document.head.appendChild(cfgScript);
 // ══════════════════════════════════════════
 // ÉTAT
 // ══════════════════════════════════════════
-let ME = null;   // utilisateur connecté
-let POSTS = [];  // tableau des posts
-let DATA_SHA = null; // SHA du data.json pour l'update GitHub
+let ME = null;
+let POSTS = [];
+let DATA_SHA = null;
 
 // ══════════════════════════════════════════
 // SETUP
@@ -574,10 +616,9 @@ async function generateConfig() {
   const h1 = await sha256(p1);
   const h2 = await sha256(p2);
 
-  // Encode le token en base64 pour eviter la detection GitHub sur repo public
   const b64 = btoa(token);
   const mid = Math.floor(b64.length / 2);
-  const tk = [b64.slice(mid), b64.slice(0, mid)]; // stocke inverse
+  const tk = [b64.slice(mid), b64.slice(0, mid)];
   const code = `// Me&U — Config
 window.CFG = {
   _tk: ["${tk[0]}","${tk[1]}"],
@@ -697,7 +738,6 @@ async function ghPut(path, content, sha, message) {
 
 async function ghPutBinary(path, arrayBuffer, sha, message) {
   const { base, headers } = GH();
-  // Conversion base64 robuste — fonctionne même pour les grosses images
   const bytes = new Uint8Array(arrayBuffer);
   const CHUNK = 8192;
   let binary = '';
@@ -729,7 +769,6 @@ async function loadPosts() {
       const json = decodeURIComponent(escape(atob(file.content.replace(/\n/g,''))));
       POSTS = JSON.parse(json).posts || [];
     } else {
-      // Crée data.json vide
       const res = await ghPut('data.json', '{"posts":[]}', null, 'Init data.json');
       DATA_SHA = res.content.sha;
       POSTS = [];
@@ -747,7 +786,6 @@ async function savePosts() {
     const res = await ghPut('data.json', json, DATA_SHA, 'Update posts');
     DATA_SHA = res.content.sha;
   } catch(e) {
-    // Conflit de SHA (409) : le fichier a été modifié entre-temps → on recharge le SHA et on réessaie
     if (e.message && (e.message.includes('409') || e.message.includes('422'))) {
       const file = await ghGet('data.json');
       if (file) DATA_SHA = file.sha;
@@ -792,6 +830,8 @@ function buildCard(post) {
     `<button class="rxn-btn${v.mine?' mine':''}" onclick="toggleRxn('${post.id}','${e}')">${e}<span class="cnt">${v.count>1?v.count:''}</span></button>`
   ).join('');
 
+  // Commentaires
+  const cmtCount = (post.comments || []).length;
   const comments = (post.comments || []).map(c => {
     const cu = CFG.users[c.userId];
     return `<div class="comment-item">
@@ -803,10 +843,18 @@ function buildCard(post) {
     </div>`;
   }).join('');
 
+  // Libellé du bouton toggle commentaires
+  const toggleLabel = cmtCount === 0
+    ? 'Ajouter un commentaire'
+    : cmtCount === 1
+      ? 'Voir 1 commentaire'
+      : `Voir ${cmtCount} commentaires`;
+
   const imgHtml = post.imgPath
     ? `<div class="post-img-wrap">
          <div class="post-img-loading" id="il-${post.id}">🌸</div>
-         <img class="post-img" src="https://raw.githubusercontent.com/${CFG.owner}/${CFG.repo}/main/${post.imgPath}"
+         <img class="post-img"
+              src="https://raw.githubusercontent.com/${CFG.owner}/${CFG.repo}/main/${post.imgPath}"
               alt="photo" loading="lazy"
               onload="document.getElementById('il-${post.id}')?.remove()"
               onerror="this.parentElement.innerHTML='<div style=\'padding:40px;text-align:center;color:var(--text-muted)\'>📷</div>'">
@@ -832,11 +880,16 @@ function buildCard(post) {
     </div>
     <div id="epwrap-${post.id}"></div>
     <div class="comments-wrap">
-      <div id="cmts-${post.id}">${comments}</div>
-      <div class="c-input-row">
-        <input class="c-input" type="text" placeholder="Un commentaire…" id="ci-${post.id}"
-               onkeydown="if(event.key==='Enter')sendComment('${post.id}')">
-        <button class="c-send" onclick="sendComment('${post.id}')">↑</button>
+      <button class="comments-toggle" id="ctbtn-${post.id}" onclick="toggleComments('${post.id}')">
+        <span class="ct-arrow">▾</span>
+        <span id="ct-label-${post.id}">${toggleLabel}</span>
+      </button>
+      <div class="comments-list" id="cmts-${post.id}">${comments}
+        <div class="c-input-row">
+          <input class="c-input" type="text" placeholder="Un commentaire…" id="ci-${post.id}"
+                 onkeydown="if(event.key==='Enter')sendComment('${post.id}')">
+          <button class="c-send" onclick="sendComment('${post.id}')">↑</button>
+        </div>
       </div>
     </div>`;
   return div;
@@ -844,6 +897,42 @@ function buildCard(post) {
 
 function esc(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+}
+
+// ══════════════════════════════════════════
+// TOGGLE COMMENTAIRES
+// ══════════════════════════════════════════
+function toggleComments(pid) {
+  const list = document.getElementById(`cmts-${pid}`);
+  const btn  = document.getElementById(`ctbtn-${pid}`);
+  const isOpen = list.classList.toggle('open');
+  btn.classList.toggle('open', isOpen);
+
+  // Focus sur l'input si on ouvre
+  if (isOpen) {
+    setTimeout(() => document.getElementById(`ci-${pid}`)?.focus(), 100);
+  }
+}
+
+// Ouvre automatiquement les commentaires après en avoir ajouté un
+function openComments(pid) {
+  const list = document.getElementById(`cmts-${pid}`);
+  const btn  = document.getElementById(`ctbtn-${pid}`);
+  list.classList.add('open');
+  btn.classList.add('open');
+}
+
+function updateCommentToggleLabel(pid) {
+  const post = POSTS.find(p => p.id === pid);
+  if (!post) return;
+  const cmtCount = (post.comments || []).length;
+  const label = cmtCount === 0
+    ? 'Ajouter un commentaire'
+    : cmtCount === 1
+      ? 'Voir 1 commentaire'
+      : `Voir ${cmtCount} commentaires`;
+  const el = document.getElementById(`ct-label-${pid}`);
+  if (el) el.textContent = label;
 }
 
 // ══════════════════════════════════════════
@@ -872,7 +961,6 @@ async function toggleRxn(pid, emoji) {
 
   document.getElementById(`ep-${pid}`)?.classList.remove('open');
 
-  // Optimistic UI update
   const rxMap = {};
   post.reactions.forEach(r => {
     if (!rxMap[r.emoji]) rxMap[r.emoji] = { count:0, mine:false };
@@ -902,7 +990,8 @@ async function sendComment(pid) {
   const comment = { userId: ME.id, text, ts: Date.now() };
   post.comments.push(comment);
 
-  // Optimistic UI
+  // Optimistic UI — insère avant le champ de saisie
+  const inputRow = input.closest('.c-input-row');
   const div = document.createElement('div');
   div.className = 'comment-item';
   div.innerHTML = `
@@ -911,7 +1000,11 @@ async function sendComment(pid) {
       <div class="c-author">${ME.name}</div>
       <div class="c-text">${esc(text)}</div>
     </div>`;
-  document.getElementById(`cmts-${pid}`).appendChild(div);
+  inputRow.parentNode.insertBefore(div, inputRow);
+
+  // Met à jour le libellé du bouton et garde ouvert
+  updateCommentToggleLabel(pid);
+  openComments(pid);
 
   try {
     await savePosts();
@@ -960,7 +1053,6 @@ async function submitPost() {
   let imgPath = null;
 
   if (pickedFile) {
-    // Vérification taille (max ~10 Mo pour l'API GitHub)
     if (pickedFile.size > 10 * 1024 * 1024) {
       setStatus('❌ Photo trop lourde (max 10 Mo). Compresse-la et réessaie.');
       document.getElementById('btn-post').disabled = false;
@@ -971,7 +1063,6 @@ async function submitPost() {
       const ext = pickedFile.name.split('.').pop().toLowerCase();
       imgPath = `photos/${Date.now()}_${Math.random().toString(36).slice(2,6)}.${ext}`;
       const buf = await pickedFile.arrayBuffer();
-      // Pas besoin de vérifier si la photo existe (nom aléatoire unique)
       await ghPutBinary(imgPath, buf, null, `Photo: ${imgPath}`);
     } catch(e) {
       console.error('Upload error:', e);
@@ -996,7 +1087,6 @@ async function submitPost() {
   try {
     await savePosts();
   } catch(e) {
-    // Retire le post du tableau si la sauvegarde échoue
     POSTS.shift();
     setStatus('❌ ' + (e.message || 'Erreur de sauvegarde. Réessaie.'));
     document.getElementById('btn-post').disabled = false;
