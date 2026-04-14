@@ -1,6 +1,15 @@
 {
   "posts": [
     {
+      "id": "p1776160106031n7t",
+      "userId": "user1",
+      "caption": "Recharge Vitamin D",
+      "imgPath": "photos/1776160098904_ulam.jpg",
+      "ts": 1776160106031,
+      "reactions": [],
+      "comments": []
+    },
+    {
       "id": "p1776091689902uh8",
       "userId": "user2",
       "caption": "Helloooo",
