@@ -6,7 +6,12 @@
       "caption": "Bonjour ❤️",
       "imgPath": "photos/1776259119152_tjjc.jpg",
       "ts": 1776259123073,
-      "reactions": [],
+      "reactions": [
+        {
+          "userId": "user1",
+          "emoji": "❤️"
+        }
+      ],
       "comments": []
     },
     {
