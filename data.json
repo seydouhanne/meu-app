@@ -6,7 +6,12 @@
       "caption": "Bonjourrrrr…wish u were here 😘",
       "imgPath": "photos/1776774217345_srez.jpg",
       "ts": 1776774223878,
-      "reactions": [],
+      "reactions": [
+        {
+          "userId": "user1",
+          "emoji": "❤️"
+        }
+      ],
       "comments": []
     },
     {
