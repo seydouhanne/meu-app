@@ -6,7 +6,12 @@
       "caption": "Bisouuuuuux",
       "imgPath": "photos/1777368240131_83b7.jpeg",
       "ts": 1777368242247,
-      "reactions": [],
+      "reactions": [
+        {
+          "userId": "user2",
+          "emoji": "❤️"
+        }
+      ],
       "comments": []
     },
     {
