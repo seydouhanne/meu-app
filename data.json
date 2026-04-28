@@ -26,7 +26,13 @@
           "emoji": "😂"
         }
       ],
-      "comments": []
+      "comments": [
+        {
+          "userId": "user2",
+          "text": "T’es bête. 😂",
+          "ts": 1777373854967
+        }
+      ]
     },
     {
       "id": "p1776774223878srw",
