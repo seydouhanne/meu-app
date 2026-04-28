@@ -20,7 +20,12 @@
       "caption": "Hello Miss u",
       "imgPath": "photos/1777167703397_50gu.jpg",
       "ts": 1777167705150,
-      "reactions": [],
+      "reactions": [
+        {
+          "userId": "user2",
+          "emoji": "😂"
+        }
+      ],
       "comments": []
     },
     {
