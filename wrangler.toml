@@ -1,0 +1,15 @@
+name = "meu-push"
+main = "src/index.js"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+# Origine autorisée à appeler ce Worker (ton site GitHub Pages).
+# Change si tu utilises un domaine personnalisé.
+[vars]
+ALLOWED_ORIGIN = "https://seydouhanne.github.io"
+
+# Créée avec : wrangler kv namespace create PUSH_SUBS
+# Remplace "id" par l'ID retourné par la commande.
+kv_namespaces = [
+  { binding = "PUSH_SUBS", id = "REPLACE_WITH_KV_NAMESPACE_ID" }
+]

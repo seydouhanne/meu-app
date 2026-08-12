@@ -1,0 +1,2282 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Me&U</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#c97b7b">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Me&U">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,400&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<style>
+  :root {
+    --rose: #e8a4a4;
+    --rose-deep: #c97b7b;
+    --rose-light: #f5dede;
+    --warm: #f9f0ec;
+    --warm-mid: #eeddd8;
+    --sand: #d4b8b0;
+    --text: #2a1f1f;
+    --text-soft: #7a5c5c;
+    --text-muted: #b89898;
+    --white: #fff;
+    --card-bg: rgba(255,255,255,0.88);
+    --radius: 20px;
+    --shadow: 0 4px 24px rgba(180,120,120,0.13);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-top: env(safe-area-inset-top, 0px);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--warm);
+    color: var(--text);
+    min-height: 100vh;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 80% 10%, rgba(232,164,164,0.22) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 50% at 10% 85%, rgba(212,184,176,0.18) 0%, transparent 60%);
+    pointer-events: none; z-index: 0;
+  }
+
+  /* ─── ICON HELPER ─── */
+  .icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .icon svg {
+    display: block;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* ─── TOAST ─── */
+  #toast-container {
+    position: fixed;
+    bottom: calc(90px + var(--safe-bottom));
+    left: 50%; transform: translateX(-50%);
+    z-index: 999;
+    display: flex; flex-direction: column; align-items: center;
+    gap: 8px; pointer-events: none;
+  }
+  .toast {
+    background: var(--text);
+    color: white;
+    padding: 10px 18px;
+    border-radius: 50px;
+    font-size: 13px;
+    font-weight: 500;
+    display: flex; align-items: center; gap: 7px;
+    box-shadow: 0 4px 20px rgba(42,31,31,0.25);
+    animation: toastIn 0.3s cubic-bezier(0.22,1,0.36,1) both;
+    pointer-events: auto;
+    white-space: nowrap;
+  }
+  .toast.toast-success { background: #4a7c59; }
+  .toast.toast-error   { background: #b85555; }
+  .toast.toast-out { animation: toastOut 0.25s ease forwards; }
+  @keyframes toastIn  { from{opacity:0;transform:translateY(10px) scale(0.95)} to{opacity:1;transform:translateY(0) scale(1)} }
+  @keyframes toastOut { from{opacity:1;transform:translateY(0)} to{opacity:0;transform:translateY(6px)} }
+
+  /* ─── SKELETON ─── */
+  .skeleton-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    margin: 0 14px 18px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.85);
+  }
+  .skel { background: linear-gradient(90deg, var(--warm-mid) 25%, var(--warm) 50%, var(--warm-mid) 75%); background-size: 200% 100%; animation: skel 1.4s infinite; border-radius: 8px; }
+  @keyframes skel { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+  /* ─── AUTH ─── */
+  #auth-screen {
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: calc(32px + var(--safe-top)) 24px 32px;
+    position: relative; z-index: 1;
+  }
+  .auth-logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 54px; color: var(--rose-deep);
+    letter-spacing: -1px; margin-bottom: 4px; line-height: 1;
+  }
+  .auth-logo em { font-style: italic; color: var(--text); }
+  .auth-tagline {
+    font-size: 12px; color: var(--text-muted);
+    letter-spacing: 2.5px; text-transform: uppercase;
+    margin-bottom: 44px;
+  }
+  .auth-card {
+    background: var(--card-bg);
+    backdrop-filter: blur(14px);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 32px 28px;
+    width: 100%; max-width: 360px;
+    border: 1px solid rgba(255,255,255,0.9);
+  }
+  .auth-card h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px; margin-bottom: 22px; color: var(--text);
+  }
+  .user-picker { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 22px; }
+  .user-btn {
+    border: 2px solid var(--warm-mid); background: var(--warm);
+    border-radius: 14px; padding: 16px 10px;
+    cursor: pointer; transition: all 0.2s;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+  }
+  .user-btn.active { border-color: var(--rose-deep); background: var(--rose-light); }
+  .user-avatar {
+    width: 48px; height: 48px; border-radius: 50%;
+    background: var(--rose-light);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; transition: background 0.2s;
+  }
+  .user-btn.active .user-avatar { background: var(--rose); }
+  .user-name { font-size: 13px; font-weight: 500; color: var(--text-soft); }
+
+  .input-wrap { position: relative; margin-bottom: 14px; }
+  .input-icon {
+    position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+    color: var(--text-muted); pointer-events: none;
+  }
+  .auth-input {
+    width: 100%; padding: 14px 16px 14px 42px;
+    border: 1.5px solid var(--warm-mid); border-radius: 12px;
+    background: var(--warm); font-family: 'DM Sans', sans-serif;
+    font-size: 15px; color: var(--text); outline: none;
+    transition: border 0.2s, background 0.2s;
+  }
+  .auth-input.no-icon { padding-left: 16px; }
+  .auth-input:focus { border-color: var(--rose-deep); background: white; }
+
+  .auth-submit {
+    width: 100%; padding: 15px;
+    background: var(--rose-deep); color: white;
+    border: none; border-radius: 12px;
+    font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500;
+    cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .auth-submit:hover { background: var(--text); transform: translateY(-1px); }
+  .auth-error {
+    color: var(--rose-deep); font-size: 13px; text-align: center;
+    margin-top: 10px; min-height: 18px;
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+  }
+
+  /* ─── SETUP ─── */
+  #setup-screen {
+    display: none; min-height: 100vh;
+    flex-direction: column; align-items: center; justify-content: center;
+    padding: 32px 24px; position: relative; z-index: 1;
+  }
+  .setup-logo { font-family:'DM Serif Display',serif; font-size:36px; color:var(--rose-deep); margin-bottom:24px; }
+  .setup-logo em { font-style:italic; color:var(--text); }
+  .setup-card {
+    background: var(--card-bg); backdrop-filter: blur(14px);
+    border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 28px 24px; width: 100%; max-width: 440px;
+    border: 1px solid rgba(255,255,255,0.9);
+  }
+  .setup-card h2 {
+    font-family:'DM Serif Display',serif; font-size:22px; margin-bottom:6px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .setup-intro { font-size:13px; color:var(--text-soft); margin-bottom:24px; line-height:1.7; }
+  .setup-section { margin-bottom:22px; padding-bottom:22px; border-bottom:1px solid var(--warm-mid); }
+  .setup-section:last-of-type { border-bottom:none; margin-bottom:0; }
+  .setup-section h3 {
+    font-size:12px; font-weight:500; color:var(--text-muted);
+    text-transform:uppercase; letter-spacing:1.5px; margin-bottom:14px;
+    display: flex; align-items: center; gap: 7px;
+  }
+  .setup-field { margin-bottom:12px; }
+  .setup-label { font-size:12px; font-weight:500; color:var(--text-soft); display:block; margin-bottom:5px; }
+  .setup-hint { font-size:11px; color:var(--text-muted); margin-top:4px; line-height:1.5; }
+  .btn-setup {
+    width:100%; padding:14px; background:var(--rose-deep); color:white;
+    border:none; border-radius:12px; font-family:'DM Sans',sans-serif;
+    font-size:14px; font-weight:500; cursor:pointer; transition:background 0.2s;
+    margin-top:8px; display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-setup:hover { background:var(--text); }
+  #setup-result { display:none; margin-top:18px; }
+  .setup-result-title { font-size:12px; font-weight:500; color:var(--text-soft); margin-bottom:6px; display:flex; align-items:center; gap:6px; }
+  #setup-code {
+    width:100%; font-family:monospace; font-size:11px;
+    background:var(--warm); border:1.5px solid var(--warm-mid);
+    border-radius:10px; padding:12px; color:var(--text);
+    min-height:120px; resize:none; outline:none; line-height:1.6;
+  }
+  .copy-btn {
+    margin-top:8px; padding:9px 20px; background:var(--warm-mid);
+    border:none; border-radius:8px; cursor:pointer;
+    font-family:'DM Sans',sans-serif; font-size:13px; color:var(--text-soft);
+    transition:all 0.2s; width:100%;
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+  }
+  .copy-btn:hover { background:var(--sand); color:var(--text); }
+
+  /* ─── APP ─── */
+  #app { display:none; position:relative; z-index:1; }
+
+  .topbar {
+    position:fixed; top:0; left:0; right:0; z-index:100;
+    background:rgba(249,240,236,0.93); backdrop-filter:blur(18px);
+    padding: calc(13px + var(--safe-top)) 20px 11px;
+    display:flex; align-items:center; justify-content:space-between;
+    border-bottom:1px solid var(--warm-mid);
+  }
+  .topbar-logo { font-family:'DM Serif Display',serif; font-size:26px; color:var(--rose-deep); }
+  .topbar-logo em { font-style:italic; color:var(--text); }
+  .topbar-right { display:flex; align-items:center; gap:10px; }
+  .topbar-user { display:flex; align-items:center; gap:8px; }
+  .topbar-avatar {
+    width:32px; height:32px; border-radius:50%;
+    background:var(--rose); display:flex; align-items:center;
+    justify-content:center; font-size:15px;
+    border: 2px solid rgba(255,255,255,0.6);
+  }
+  .topbar-name { font-size:13px; color:var(--text-soft); font-weight:500; }
+
+  .logout-btn {
+    background: var(--warm); border: 1.5px solid var(--warm-mid);
+    color: var(--text-muted); cursor:pointer;
+    padding: 6px; border-radius:10px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .logout-btn:hover { color: var(--rose-deep); border-color: var(--rose); background: var(--rose-light); }
+
+  .settings-btn {
+    background: var(--warm); border: 1.5px solid var(--warm-mid);
+    color: var(--text-muted); cursor:pointer;
+    padding: 6px; border-radius:10px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .settings-btn:hover { color: var(--rose-deep); border-color: var(--rose); background: var(--rose-light); }
+
+  .topbar-user {
+    display:flex; align-items:center; gap:8px; cursor: pointer;
+    border-radius: 12px; padding: 4px 6px; transition: background 0.2s;
+  }
+  .topbar-user:hover { background: rgba(255,255,255,0.6); }
+
+  .avatar-img-box {
+    overflow: hidden; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  }
+  .avatar-img {
+    width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block;
+  }
+
+  /* ─── SETTINGS MODAL ─── */
+  .settings-profile-section {
+    display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 6px 0 14px;
+  }
+  .settings-avatar-wrap {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+  }
+  .settings-avatar-preview {
+    width: 84px; height: 84px; border-radius: 50%;
+    background: var(--rose-light); border: 3px solid var(--rose);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 36px; cursor: pointer; position: relative; overflow: hidden;
+    box-shadow: 0 4px 16px rgba(201,123,123,0.25); transition: transform 0.2s;
+  }
+  .settings-avatar-preview:hover { transform: scale(1.04); }
+  .settings-avatar-preview img { width: 100%; height: 100%; object-fit: cover; }
+  .settings-av-overlay {
+    position: absolute; inset: 0; background: rgba(42,31,31,0.45);
+    display: flex; align-items: center; justify-content: center; color: white;
+    opacity: 0; transition: opacity 0.2s;
+  }
+  .settings-avatar-preview:hover .settings-av-overlay { opacity: 1; }
+
+  .btn-change-photo {
+    background: var(--warm); border: 1.5px solid var(--warm-mid);
+    border-radius: 20px; padding: 6px 14px; font-size: 12px; font-weight: 500;
+    color: var(--text-soft); cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; gap: 6px; font-family: 'DM Sans', sans-serif;
+  }
+  .btn-change-photo:hover { border-color: var(--rose); color: var(--rose-deep); background: var(--rose-light); }
+
+  .btn-remove-photo {
+    background: none; border: none; font-size: 11px; color: #b85555;
+    cursor: pointer; font-family: 'DM Sans', sans-serif; text-decoration: underline; margin-top: -2px;
+  }
+
+  .settings-form { width: 100%; }
+
+  .refresh-btn {
+    background: var(--warm); border: 1.5px solid var(--warm-mid);
+    color: var(--text-muted); cursor:pointer;
+    padding: 6px; border-radius:10px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .refresh-btn:hover { color: var(--rose-deep); border-color: var(--rose); background: var(--rose-light); }
+  .refresh-btn.spinning svg { animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ─── NOTIFICATIONS ─── */
+  .notif-wrap { position: relative; }
+  .notif-btn {
+    background: var(--warm); border: 1.5px solid var(--warm-mid);
+    color: var(--text-muted); cursor:pointer;
+    padding: 6px; border-radius:10px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; position: relative;
+  }
+  .notif-btn:hover, .notif-btn.active { color: var(--rose-deep); border-color: var(--rose); background: var(--rose-light); }
+  .notif-badge {
+    position: absolute; top: -5px; right: -5px;
+    background: var(--rose-deep); color: white;
+    font-size: 10px; font-weight: 700;
+    min-width: 17px; height: 17px; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 4px; border: 2px solid white;
+    box-shadow: 0 2px 6px rgba(201,123,123,0.4);
+    animation: badgePop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  @keyframes badgePop { 0%{transform:scale(0)} 100%{transform:scale(1)} }
+
+  .notif-dropdown {
+    display: none; position: absolute; right: -50px; top: calc(100% + 10px);
+    width: 320px; max-width: calc(100vw - 32px);
+    background: var(--card-bg); backdrop-filter: blur(18px);
+    border: 1px solid rgba(255,255,255,0.9); border-radius: 18px;
+    box-shadow: 0 12px 36px rgba(42,31,31,0.18);
+    z-index: 250; overflow: hidden;
+    animation: notifIn 0.25s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .notif-dropdown.open { display: flex; flex-direction: column; }
+  @keyframes notifIn { from{opacity:0; transform:translateY(-8px) scale(0.96)} to{opacity:1; transform:translateY(0) scale(1)} }
+
+  .notif-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 14px; border-bottom: 1px solid var(--warm-mid);
+    background: rgba(255,255,255,0.4);
+  }
+  .notif-title { font-size: 14px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 7px; }
+  .notif-title .icon { color: var(--rose-deep); }
+  .notif-actions { display: flex; align-items: center; gap: 6px; }
+  .notif-act-btn {
+    background: var(--warm); border: 1.5px solid var(--warm-mid);
+    color: var(--text-soft); cursor: pointer; border-radius: 8px;
+    padding: 5px; display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .notif-act-btn:hover { color: var(--rose-deep); border-color: var(--rose); background: var(--rose-light); }
+  .notif-act-btn.active { color: #4a7c59; border-color: #4a7c59; background: #eef6f0; }
+
+  .notif-list { max-height: 320px; overflow-y: auto; padding: 6px; }
+  .notif-empty {
+    padding: 24px 16px; text-align: center; color: var(--text-muted);
+    font-size: 13px; display: flex; flex-direction: column; align-items: center; gap: 8px;
+  }
+  .notif-item {
+    display: flex; align-items: center; gap: 11px;
+    padding: 10px 12px; border-radius: 12px;
+    cursor: pointer; transition: background 0.18s, transform 0.15s;
+    margin-bottom: 2px; position: relative;
+  }
+  .notif-item:hover { background: rgba(255,255,255,0.75); transform: translateX(2px); }
+  .notif-item.unread { background: var(--rose-light); }
+  .notif-item.unread::before {
+    content: ''; position: absolute; left: 4px; top: 50%; transform: translateY(-50%);
+    width: 6px; height: 6px; border-radius: 50%; background: var(--rose-deep);
+  }
+
+  .notif-icon-box {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: var(--warm); border: 1.5px solid var(--warm-mid);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--rose-deep); flex-shrink: 0; transition: all 0.2s;
+  }
+  .notif-item.unread .notif-icon-box { background: white; border-color: var(--rose); }
+
+  .notif-body { flex: 1; min-width: 0; }
+  .notif-msg { font-size: 12.5px; color: var(--text); line-height: 1.4; word-break: break-word; }
+  .notif-msg strong { font-weight: 600; color: var(--text); }
+  .notif-date { font-size: 10.5px; color: var(--text-muted); margin-top: 2px; }
+
+  /* Highlight target card */
+  .post-card.highlight-target {
+    animation: targetGlow 2.5s ease-out;
+  }
+  @keyframes targetGlow {
+    0% { box-shadow: 0 0 0 4px var(--rose-deep), var(--shadow); transform: scale(1.02); }
+    50% { box-shadow: 0 0 0 4px var(--rose), var(--shadow); }
+    100% { box-shadow: var(--shadow); transform: scale(1); }
+  }
+
+  /* ─── FEED ─── */
+  .feed {
+    padding: calc(70px + var(--safe-top)) 0 calc(90px + var(--safe-bottom));
+    max-width: 480px; margin: 0 auto;
+  }
+
+  .feed-empty {
+    text-align:center; padding:80px 32px;
+  }
+  .feed-empty .ei { margin-bottom:16px; color: var(--rose); opacity: 0.6; }
+  .feed-empty p { font-size:15px; color:var(--text-muted); line-height:1.7; }
+
+  /* ─── POST CARD ─── */
+  .post-card {
+    background: var(--card-bg); backdrop-filter:blur(8px);
+    border-radius: var(--radius); box-shadow: var(--shadow);
+    margin: 0 14px 18px; overflow:hidden;
+    border: 1px solid rgba(255,255,255,0.85);
+    animation: fadeUp 0.35s ease both;
+  }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+
+  .post-header {
+    display:flex; align-items:center; gap:10px;
+    padding:13px 14px 10px;
+  }
+  .post-avatar {
+    width:36px; height:36px; border-radius:50%;
+    background:var(--rose-light); display:flex;
+    align-items:center; justify-content:center;
+    font-size:18px; flex-shrink:0;
+    border: 2px solid rgba(255,255,255,0.7);
+  }
+  .post-meta { flex:1; min-width:0; }
+  .post-author { font-size:14px; font-weight:500; }
+  .post-time { font-size:11px; color:var(--text-muted); }
+
+  .post-del {
+    background: none; border: none; cursor:pointer;
+    color: var(--text-muted); padding: 6px; border-radius:8px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; flex-shrink: 0;
+  }
+  .post-del:hover { color: #b85555; background: rgba(184,85,85,0.08); }
+
+  /* Confirm delete inline */
+  .delete-confirm {
+    display: none;
+    position: absolute; right: 10px; top: 42px;
+    background: white; border: 1.5px solid var(--warm-mid);
+    border-radius: 12px; padding: 8px;
+    box-shadow: 0 8px 24px rgba(42,31,31,0.12);
+    z-index: 50; gap: 6px;
+    animation: fadeUp 0.2s ease;
+  }
+  .delete-confirm.open { display: flex; }
+  .del-label { font-size: 12px; color: var(--text-soft); padding: 4px 8px; white-space:nowrap; }
+  .del-yes {
+    background: #b85555; color: white; border: none;
+    border-radius: 8px; padding: 6px 12px; font-size: 12px;
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+    transition: background 0.2s; display: flex; align-items: center; gap: 5px;
+  }
+  .del-yes:hover { background: #8b3535; }
+  .del-no {
+    background: var(--warm); color: var(--text-soft);
+    border: 1.5px solid var(--warm-mid); border-radius: 8px;
+    padding: 6px 10px; font-size: 12px; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .del-no:hover { border-color: var(--sand); }
+
+  /* ─── IMAGE ─── */
+  .post-img-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    background: var(--warm-mid);
+    overflow: hidden;
+    cursor: zoom-in;
+  }
+  .post-img {
+    width: 100%; height: 100%;
+    display: block; object-fit: cover; object-position: center;
+    transition: transform 0.3s ease;
+  }
+  .post-img-wrap:hover .post-img { transform: scale(1.03); }
+
+  /* Image skeleton */
+  .img-skeleton {
+    position: absolute; inset: 0;
+    background: linear-gradient(90deg, var(--warm-mid) 25%, #f0e0db 50%, var(--warm-mid) 75%);
+    background-size: 200% 100%;
+    animation: skel 1.4s infinite;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .img-skeleton .icon { color: var(--sand); }
+
+  /* ─── LIGHTBOX ─── */
+  #lightbox {
+    display: none; position: fixed; inset: 0; z-index: 500;
+    background: rgba(20,10,10,0.92);
+    align-items: center; justify-content: center;
+    backdrop-filter: blur(10px);
+    animation: lbIn 0.22s ease;
+    cursor: zoom-out;
+  }
+  #lightbox.open { display: flex; }
+  @keyframes lbIn { from{opacity:0} to{opacity:1} }
+
+  #lightbox-img {
+    max-width: 96vw; max-height: 90vh;
+    object-fit: contain; border-radius: 14px;
+    box-shadow: 0 12px 60px rgba(0,0,0,0.55);
+    animation: lbImgIn 0.25s cubic-bezier(0.22,1,0.36,1);
+    cursor: default; pointer-events: none;
+  }
+  @keyframes lbImgIn { from{transform:scale(0.88);opacity:0} to{transform:scale(1);opacity:1} }
+
+  #lightbox-close {
+    position: fixed; top: calc(18px + var(--safe-top)); right: 18px;
+    width: 42px; height: 42px;
+    background: rgba(255,255,255,0.15);
+    border: 1.5px solid rgba(255,255,255,0.25);
+    border-radius: 50%; color: white;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s, transform 0.2s;
+    backdrop-filter: blur(6px); z-index: 501;
+  }
+  #lightbox-close:hover { background: rgba(255,255,255,0.28); transform: scale(1.1); }
+
+  /* ─── POST BODY ─── */
+  .post-body { padding:13px 14px 8px; }
+  .post-caption { font-size:14px; line-height:1.65; color:var(--text); margin-bottom:11px; }
+
+  /* ─── REACTIONS ─── */
+  .reactions-row {
+    display:flex; align-items:center; gap:5px;
+    flex-wrap:wrap; margin-bottom:9px;
+  }
+  .rxn-btn {
+    background: var(--warm); border: 1.5px solid var(--warm-mid);
+    border-radius: 20px; padding: 5px 9px;
+    font-size: 15px; cursor: pointer; transition: all 0.15s;
+    display: flex; align-items: center; gap: 3px;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .rxn-btn .cnt { font-size:11px; color:var(--text-soft); }
+  .rxn-btn.mine { background: var(--rose-light); border-color: var(--rose); }
+  .rxn-btn:active { transform: scale(0.9); }
+
+  .add-rxn-btn {
+    background: none; border: 1.5px dashed var(--warm-mid);
+    border-radius: 20px; padding: 5px 8px;
+    cursor: pointer; color: var(--text-muted);
+    transition: all 0.2s; display: flex; align-items: center; gap: 4px;
+  }
+  .add-rxn-btn:hover { border-color: var(--rose); color: var(--rose-deep); }
+
+  .emoji-picker {
+    display: none; flex-wrap: wrap; gap: 2px;
+    padding: 10px 12px; background: white;
+    border-top: 1px solid var(--warm-mid);
+  }
+  .emoji-picker.open { display: flex; animation: fadeUp 0.2s ease; }
+  .ep-btn {
+    font-size: 22px; cursor: pointer; padding: 5px 4px;
+    border-radius: 8px; transition: transform 0.1s, background 0.1s;
+    background: none; border: none;
+  }
+  .ep-btn:hover { transform: scale(1.3); background: var(--warm); }
+
+  /* ─── COMMENTS ─── */
+  .comments-wrap { padding: 0 14px 13px; }
+  .comments-toggle {
+    display: flex; align-items: center; gap: 6px;
+    background: none; border: none; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; font-size: 12px;
+    color: var(--text-muted); padding: 4px 0 8px;
+    transition: color 0.2s;
+  }
+  .comments-toggle:hover { color: var(--rose-deep); }
+  .comments-toggle .ct-arrow {
+    display: inline-flex; transition: transform 0.25s; color: var(--text-muted);
+  }
+  .comments-toggle.open .ct-arrow { transform: rotate(180deg); }
+
+  .comments-list { display: none; overflow: hidden; }
+  .comments-list.open { display: block; }
+  .comment-item {
+    display: flex; gap: 8px; margin-bottom: 7px;
+    animation: fadeUp 0.25s ease both;
+  }
+  .c-avatar {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: var(--rose-light); display: flex;
+    align-items: center; justify-content: center;
+    font-size: 13px; flex-shrink: 0; margin-top: 2px;
+  }
+  .c-bubble {
+    background: var(--warm); border-radius: 11px 11px 11px 3px;
+    padding: 7px 11px; flex: 1;
+  }
+  .c-author { font-size: 11px; font-weight: 500; color: var(--rose-deep); margin-bottom: 2px; }
+  .c-text { font-size: 13px; color: var(--text); line-height: 1.5; }
+
+  .c-input-row { display: flex; gap: 8px; align-items: center; margin-top: 4px; }
+  .c-input {
+    flex: 1; padding: 9px 13px;
+    border: 1.5px solid var(--warm-mid); border-radius: 20px;
+    background: var(--warm); font-family: 'DM Sans', sans-serif;
+    font-size: 13px; color: var(--text); outline: none;
+    transition: border 0.2s, background 0.2s;
+  }
+  .c-input:focus { border-color: var(--rose); background: white; }
+  .c-send {
+    background: var(--rose-deep); color: white; border: none; border-radius: 50%;
+    width: 33px; height: 33px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: background 0.2s; flex-shrink: 0;
+  }
+  .c-send:hover { background: var(--text); }
+
+  /* ─── BOTTOMBAR ─── */
+  .bottombar {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(249,240,236,0.95); backdrop-filter: blur(18px);
+    border-top: 1px solid var(--warm-mid);
+    padding: 10px 20px calc(14px + var(--safe-bottom));
+    display: flex; justify-content: center;
+  }
+  .new-post-btn {
+    background: var(--rose-deep); color: white; border: none; border-radius: 50px;
+    padding: 13px 34px; font-family: 'DM Sans', sans-serif;
+    font-size: 14px; font-weight: 500; cursor: pointer;
+    display: flex; align-items: center; gap: 8px;
+    box-shadow: 0 4px 20px rgba(201,123,123,0.38);
+    transition: all 0.2s;
+  }
+  .new-post-btn:hover { background: var(--text); transform: translateY(-2px); }
+  .new-post-btn:active { transform: translateY(0); }
+
+  /* ─── MODAL ─── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(42,31,31,0.48); z-index: 200;
+    align-items: flex-end; backdrop-filter: blur(4px);
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-sheet {
+    background: white; border-radius: 24px 24px 0 0;
+    padding: 22px 18px calc(24px + var(--safe-bottom));
+    width: 100%; max-width: 480px;
+    margin: 0 auto; animation: slideUp 0.28s ease;
+    max-height: 90vh; overflow-y: auto;
+  }
+  @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+
+  .modal-handle {
+    width: 38px; height: 4px; background: var(--warm-mid);
+    border-radius: 2px; margin: 0 auto 18px;
+  }
+  .modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 18px;
+  }
+  .modal-title { font-family:'DM Serif Display',serif; font-size:22px; }
+  .modal-close-btn {
+    background: var(--warm); border: 1.5px solid var(--warm-mid);
+    border-radius: 10px; padding: 6px; cursor: pointer;
+    color: var(--text-muted); transition: all 0.2s;
+    display: flex; align-items: center;
+  }
+  .modal-close-btn:hover { color: var(--text); border-color: var(--sand); }
+
+  .upload-zone {
+    border: 2px dashed var(--sand); border-radius: 16px;
+    padding: 28px 16px; text-align: center; cursor: pointer;
+    transition: all 0.2s; margin-bottom: 14px; background: var(--warm);
+    position: relative; overflow: hidden;
+  }
+  .upload-zone:hover { border-color: var(--rose-deep); background: var(--rose-light); }
+  .upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; font-size: 0; }
+  .upload-zone .uz-icon { margin-bottom: 8px; color: var(--rose-deep); display: flex; justify-content: center; }
+  .upload-zone p { font-size: 14px; color: var(--text-soft); }
+  .upload-zone .uz-hint { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+  .upload-preview {
+    width: 100%; border-radius: 12px; margin-bottom: 14px;
+    display: none; aspect-ratio: 4/3; object-fit: cover;
+  }
+
+  .caption-wrap { position: relative; margin-bottom: 14px; }
+  .modal-textarea {
+    width: 100%; padding: 13px 15px;
+    border: 1.5px solid var(--warm-mid); border-radius: 12px;
+    background: var(--warm); font-family: 'DM Sans', sans-serif;
+    font-size: 14px; color: var(--text); resize: none; outline: none;
+    transition: border 0.2s, background 0.2s; min-height: 76px;
+  }
+  .modal-textarea:focus { border-color: var(--rose-deep); background: white; }
+  .char-counter {
+    position: absolute; bottom: 8px; right: 10px;
+    font-size: 11px; color: var(--text-muted); pointer-events: none;
+  }
+  .char-counter.warn { color: var(--rose-deep); }
+
+  .upload-status {
+    font-size: 13px; text-align: center; padding: 6px 0;
+    display: none; color: var(--text-soft);
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .upload-status:empty { display: none; }
+
+  .spinner {
+    width: 16px; height: 16px; border: 2px solid var(--warm-mid);
+    border-top-color: var(--rose-deep); border-radius: 50%;
+    animation: spin 0.7s linear infinite; flex-shrink: 0;
+  }
+
+  .modal-actions { display: flex; gap: 10px; margin-top: 14px; }
+  .btn-cancel {
+    flex: 1; padding: 13px; background: var(--warm);
+    border: 1.5px solid var(--warm-mid); border-radius: 12px;
+    font-family: 'DM Sans', sans-serif; font-size: 14px;
+    cursor: pointer; color: var(--text-soft); transition: all 0.2s;
+  }
+  .btn-cancel:hover { background: var(--warm-mid); }
+  .btn-post {
+    flex: 2; padding: 13px; background: var(--rose-deep); color: white;
+    border: none; border-radius: 12px; font-family: 'DM Sans', sans-serif;
+    font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-post:hover:not(:disabled) { background: var(--text); }
+  .btn-post:disabled { background: var(--sand); cursor: not-allowed; }
+
+  code {
+    background: var(--warm-mid); padding: 2px 6px;
+    border-radius: 4px; font-size: 11px; font-family: monospace;
+  }
+  a { color: var(--rose-deep); }
+</style>
+</head>
+<body>
+
+<!-- ── AUTH ── -->
+<div id="auth-screen">
+  <div class="auth-logo">Me<em>&</em>U</div>
+  <div class="auth-tagline">notre monde à nous</div>
+  <div class="auth-card">
+    <h2>Bonjour 👋</h2>
+    <div class="user-picker">
+      <button class="user-btn active" onclick="selectUser('user1')" id="btn-u1">
+        <div class="user-avatar" id="av-u1">🌸</div>
+        <div class="user-name" id="nm-u1">Moi</div>
+      </button>
+      <button class="user-btn" onclick="selectUser('user2')" id="btn-u2">
+        <div class="user-avatar" id="av-u2">💛</div>
+        <div class="user-name" id="nm-u2">Toi</div>
+      </button>
+    </div>
+    <div class="input-wrap">
+      <span class="input-icon icon"><i data-lucide="lock" width="16" height="16"></i></span>
+      <input class="auth-input" type="password" id="auth-pw" placeholder="Mot de passe…"
+             onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="auth-submit" onclick="doLogin()">
+      <span>Entrer</span>
+      <span class="icon"><i data-lucide="arrow-right" width="18" height="18"></i></span>
+    </button>
+    <div class="auth-error" id="auth-err"></div>
+  </div>
+</div>
+
+<!-- ── SETUP ── -->
+<div id="setup-screen">
+  <div class="setup-logo">Me<em>&</em>U</div>
+  <div class="setup-card">
+    <h2>
+      <span class="icon" style="color:var(--rose-deep)"><i data-lucide="settings" width="22" height="22"></i></span>
+      Première configuration
+    </h2>
+    <p class="setup-intro">
+      Remplis les infos ci-dessous. L'outil génère un fichier <code>config.js</code>
+      à ajouter dans ton repo GitHub à côté de <code>index.html</code>.
+    </p>
+
+    <div class="setup-section">
+      <h3>
+        <span class="icon"><i data-lucide="key" width="13" height="13"></i></span>
+        GitHub
+      </h3>
+      <div class="setup-field">
+        <label class="setup-label">Personal Access Token</label>
+        <input class="auth-input no-icon" type="password" id="s-token" placeholder="ghp_xxxxxxxxxxxx" style="margin-bottom:0">
+        <p class="setup-hint">
+          <a href="https://github.com/settings/tokens/new?scopes=repo&description=MeU-App" target="_blank">Crée un token ici</a>
+          — coche uniquement <code>repo</code>.
+        </p>
+      </div>
+      <div class="setup-field" style="margin-top:12px">
+        <label class="setup-label">Nom d'utilisateur GitHub</label>
+        <input class="auth-input no-icon" type="text" id="s-owner" placeholder="ton-pseudo" style="margin-bottom:0">
+      </div>
+      <div class="setup-field" style="margin-top:12px">
+        <label class="setup-label">Nom du repo</label>
+        <input class="auth-input no-icon" type="text" id="s-repo" placeholder="meu-app" style="margin-bottom:0">
+      </div>
+    </div>
+
+    <div class="setup-section">
+      <h3><span class="icon"><i data-lucide="user" width="13" height="13"></i></span> Compte 1 — toi</h3>
+      <div style="display:grid;grid-template-columns:1fr 80px;gap:10px">
+        <div class="setup-field">
+          <label class="setup-label">Prénom</label>
+          <input class="auth-input no-icon" type="text" id="s-n1" placeholder="Ex: Sarah" style="margin-bottom:0">
+        </div>
+        <div class="setup-field">
+          <label class="setup-label">Emoji</label>
+          <input class="auth-input no-icon" type="text" id="s-e1" placeholder="🌸" style="margin-bottom:0;text-align:center">
+        </div>
+      </div>
+      <div class="setup-field" style="margin-top:12px">
+        <label class="setup-label">Mot de passe</label>
+        <input class="auth-input no-icon" type="password" id="s-p1" placeholder="Choisis un mot de passe" style="margin-bottom:0">
+      </div>
+    </div>
+
+    <div class="setup-section">
+      <h3><span class="icon"><i data-lucide="user" width="13" height="13"></i></span> Compte 2 — ta copine</h3>
+      <div style="display:grid;grid-template-columns:1fr 80px;gap:10px">
+        <div class="setup-field">
+          <label class="setup-label">Prénom</label>
+          <input class="auth-input no-icon" type="text" id="s-n2" placeholder="Ex: Amina" style="margin-bottom:0">
+        </div>
+        <div class="setup-field">
+          <label class="setup-label">Emoji</label>
+          <input class="auth-input no-icon" type="text" id="s-e2" placeholder="💛" style="margin-bottom:0;text-align:center">
+        </div>
+      </div>
+      <div class="setup-field" style="margin-top:12px">
+        <label class="setup-label">Mot de passe</label>
+        <input class="auth-input no-icon" type="password" id="s-p2" placeholder="Choisis un mot de passe" style="margin-bottom:0">
+      </div>
+    </div>
+
+    <button class="btn-setup" onclick="generateConfig()">
+      <span class="icon"><i data-lucide="code-2" width="16" height="16"></i></span>
+      Générer config.js
+    </button>
+
+    <div id="setup-result">
+      <span class="setup-result-title">
+        <span class="icon"><i data-lucide="clipboard" width="13" height="13"></i></span>
+        Copie ce contenu dans <code>config.js</code> et upload-le dans ton repo :
+      </span>
+      <textarea id="setup-code" readonly></textarea>
+      <button class="copy-btn" onclick="copyConfig()" id="copy-btn">
+        <span class="icon"><i data-lucide="copy" width="14" height="14"></i></span>
+        <span>Copier le code</span>
+      </button>
+      <p class="setup-hint" style="margin-top:10px;text-align:center">
+        Garde ton repo <strong>privé</strong> — le token est stocké dans le code.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ── APP ── -->
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-logo">Me<em>&</em>U</div>
+    <div class="topbar-right">
+      <!-- Notifications -->
+      <div class="notif-wrap">
+        <button class="notif-btn" onclick="toggleNotifPanel()" id="notif-btn" title="Notifications">
+          <span class="icon"><i data-lucide="bell" width="16" height="16"></i></span>
+          <span class="notif-badge" id="notif-badge" style="display:none;">0</span>
+        </button>
+        <div class="notif-dropdown" id="notif-panel">
+          <div class="notif-header">
+            <div class="notif-title">
+              <span class="icon"><i data-lucide="bell" width="16" height="16"></i></span>
+              <span>Notifications</span>
+            </div>
+            <div class="notif-actions">
+              <button class="notif-act-btn" onclick="markAllNotifsRead()" title="Tout marquer comme lu">
+                <span class="icon"><i data-lucide="check-check" width="14" height="14"></i></span>
+              </button>
+              <button class="notif-act-btn" onclick="requestSystemNotifPermission()" id="push-toggle-btn" title="Activer les notifications push">
+                <span class="icon"><i data-lucide="bell-ring" width="14" height="14"></i></span>
+              </button>
+            </div>
+          </div>
+          <div class="notif-list" id="notif-list"></div>
+        </div>
+      </div>
+
+      <button class="refresh-btn" onclick="refreshFeed()" id="refresh-btn" title="Rafraîchir">
+        <span class="icon"><i data-lucide="refresh-cw" width="16" height="16"></i></span>
+      </button>
+      <div class="topbar-user" onclick="openSettingsModal()" title="Paramètres du compte">
+        <div id="tb-av-wrap" class="topbar-avatar-container">
+          <div class="topbar-avatar" id="tb-av"></div>
+        </div>
+        <span class="topbar-name" id="tb-name"></span>
+      </div>
+      <button class="settings-btn" onclick="openSettingsModal()" title="Paramètres du compte">
+        <span class="icon"><i data-lucide="settings" width="16" height="16"></i></span>
+      </button>
+      <button class="logout-btn" onclick="doLogout()" title="Se déconnecter">
+        <span class="icon"><i data-lucide="log-out" width="16" height="16"></i></span>
+      </button>
+    </div>
+  </div>
+
+  <div class="feed" id="feed">
+    <div class="feed-empty" id="feed-empty">
+      <div class="ei icon" style="display:flex;justify-content:center">
+        <i data-lucide="image" width="52" height="52"></i>
+      </div>
+      <p style="margin-top:16px">Votre fil est vide pour l'instant.<br>Sois la première à partager un moment !</p>
+    </div>
+  </div>
+
+  <div class="bottombar">
+    <button class="new-post-btn" onclick="openModal()">
+      <span class="icon"><i data-lucide="plus" width="20" height="20"></i></span>
+      Nouveau moment
+    </button>
+  </div>
+</div>
+
+<!-- ── LIGHTBOX ── -->
+<div id="lightbox" onclick="closeLightbox()">
+  <button id="lightbox-close" onclick="closeLightbox()" aria-label="Fermer">
+    <span class="icon"><i data-lucide="x" width="20" height="20"></i></span>
+  </button>
+  <img id="lightbox-img" src="" alt="Photo agrandie">
+</div>
+
+<!-- ── MODAL PUBLIER ── -->
+<div class="modal-overlay" id="modal" onclick="bgClose(event)">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-title">Partager un moment</div>
+      <button class="modal-close-btn" onclick="closeModal()">
+        <span class="icon"><i data-lucide="x" width="18" height="18"></i></span>
+      </button>
+    </div>
+
+    <div class="upload-zone" id="uz">
+      <input type="file" accept="image/*" id="file-in" onchange="previewImg(event)">
+      <div class="uz-icon icon">
+        <i data-lucide="camera" width="36" height="36"></i>
+      </div>
+      <p>Touche pour choisir une photo</p>
+      <p class="uz-hint">JPG, PNG, WEBP — max 10 Mo</p>
+    </div>
+    <img id="preview" class="upload-preview" alt="">
+
+    <div class="caption-wrap">
+      <textarea class="modal-textarea" id="caption"
+        placeholder="Dis quelque chose de beau…"
+        oninput="updateCharCount()"
+        maxlength="500"></textarea>
+      <span class="char-counter" id="char-count">0 / 500</span>
+    </div>
+
+    <div class="upload-status" id="up-status"></div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Annuler</button>
+      <button class="btn-post" id="btn-post" onclick="submitPost()">
+        <span class="icon"><i data-lucide="send" width="16" height="16"></i></span>
+        Publier
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL PARAMÈTRES DU COMPTE ── -->
+<div class="modal-overlay" id="settings-modal" onclick="bgCloseSettings(event)">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-title">Paramètres du compte</div>
+      <button class="modal-close-btn" onclick="closeSettingsModal()">
+        <span class="icon"><i data-lucide="x" width="18" height="18"></i></span>
+      </button>
+    </div>
+
+    <div class="settings-profile-section">
+      <div class="settings-avatar-wrap">
+        <div class="settings-avatar-preview" id="settings-av-prev" onclick="document.getElementById('settings-av-input').click()">
+          <div id="settings-av-box" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center">🦄</div>
+          <div class="settings-av-overlay">
+            <span class="icon"><i data-lucide="camera" width="22" height="22"></i></span>
+          </div>
+        </div>
+        <input type="file" accept="image/*" id="settings-av-input" style="display:none" onchange="previewSettingsAvatar(event)">
+        <button type="button" class="btn-change-photo" onclick="document.getElementById('settings-av-input').click()">
+          <span class="icon"><i data-lucide="image" width="14" height="14"></i></span> Changer la photo
+        </button>
+        <button type="button" class="btn-remove-photo" id="btn-remove-photo" style="display:none;" onclick="removeSettingsAvatar()">
+          Supprimer la photo de profil
+        </button>
+      </div>
+
+      <div class="settings-form">
+        <div class="setup-field">
+          <label class="setup-label">Prénom</label>
+          <input type="text" class="auth-input no-icon" id="settings-name" placeholder="Ton prénom">
+        </div>
+
+        <div class="setup-field">
+          <label class="setup-label">Émoji représentatif</label>
+          <input type="text" class="auth-input no-icon" id="settings-emoji" placeholder="Ex: 🦄, 🌸, 💛" maxlength="4">
+        </div>
+
+        <div class="setup-field">
+          <label class="setup-label">Mot de passe (optionnel)</label>
+          <input type="password" class="auth-input no-icon" id="settings-password" placeholder="Changer le mot de passe...">
+        </div>
+      </div>
+    </div>
+
+    <div class="upload-status" id="settings-status"></div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeSettingsModal()">Annuler</button>
+      <button class="btn-post" id="btn-save-settings" onclick="saveSettings()">
+        <span class="icon"><i data-lucide="save" width="16" height="16"></i></span>
+        Enregistrer
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<!-- Emoji picker template -->
+<template id="ep-tpl">
+  <div class="emoji-picker" id="ep-ID">
+    <button class="ep-btn" data-e="❤️">❤️</button>
+    <button class="ep-btn" data-e="😍">😍</button>
+    <button class="ep-btn" data-e="😂">😂</button>
+    <button class="ep-btn" data-e="🥺">🥺</button>
+    <button class="ep-btn" data-e="🔥">🔥</button>
+    <button class="ep-btn" data-e="🌸">🌸</button>
+    <button class="ep-btn" data-e="✨">✨</button>
+    <button class="ep-btn" data-e="💛">💛</button>
+    <button class="ep-btn" data-e="🎉">🎉</button>
+    <button class="ep-btn" data-e="🥰">🥰</button>
+    <button class="ep-btn" data-e="😘">😘</button>
+    <button class="ep-btn" data-e="👏">👏</button>
+  </div>
+</template>
+
+<script>
+// ── LUCIDE init ──
+document.addEventListener('DOMContentLoaded', () => lucide.createIcons());
+
+// ── CONFIG ──
+window.CFG = null;
+const cfgScript = document.createElement('script');
+cfgScript.src = 'config.js';
+cfgScript.onload = () => { lucide.createIcons(); if (window.CFG) bootAuth(); else showSetup(); };
+cfgScript.onerror = () => { lucide.createIcons(); showSetup(); };
+document.head.appendChild(cfgScript);
+
+// ── STATE ──
+let ME = null, POSTS = [], DATA_SHA = null;
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(e => console.error('SW register failed:', e));
+  });
+}
+
+// ─────────────────────────────────────────
+// TOAST
+// ─────────────────────────────────────────
+function showToast(msg, type = '') {
+  const tc = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast${type ? ' toast-' + type : ''}`;
+
+  let iconName = 'info';
+  if (type === 'success') iconName = 'check-circle';
+  if (type === 'error')   iconName = 'alert-circle';
+
+  t.innerHTML = `<i data-lucide="${iconName}" width="15" height="15"></i> ${msg}`;
+  tc.appendChild(t);
+  lucide.createIcons({ nodes: [t] });
+
+  setTimeout(() => {
+    t.classList.add('toast-out');
+    setTimeout(() => t.remove(), 280);
+  }, 2800);
+}
+
+// ─────────────────────────────────────────
+// LIGHTBOX
+// ─────────────────────────────────────────
+function openLightbox(src) {
+  const lb = document.getElementById('lightbox');
+  document.getElementById('lightbox-img').src = src;
+  lb.classList.add('open');
+  document.addEventListener('keydown', lbKeyClose);
+  document.body.style.overflow = 'hidden';
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+  document.removeEventListener('keydown', lbKeyClose);
+  document.body.style.overflow = '';
+  setTimeout(() => { document.getElementById('lightbox-img').src = ''; }, 200);
+}
+function lbKeyClose(e) { if (e.key === 'Escape') closeLightbox(); }
+
+// ─────────────────────────────────────────
+// SETUP
+// ─────────────────────────────────────────
+function showSetup() {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('setup-screen').style.display = 'flex';
+}
+async function generateConfig() {
+  const token = document.getElementById('s-token').value.trim();
+  const owner = document.getElementById('s-owner').value.trim();
+  const repo  = document.getElementById('s-repo').value.trim();
+  const n1 = document.getElementById('s-n1').value.trim() || 'Moi';
+  const e1 = document.getElementById('s-e1').value.trim() || '🌸';
+  const p1 = document.getElementById('s-p1').value;
+  const n2 = document.getElementById('s-n2').value.trim() || 'Toi';
+  const e2 = document.getElementById('s-e2').value.trim() || '💛';
+  const p2 = document.getElementById('s-p2').value;
+  if (!token || !owner || !repo || !p1 || !p2) { showToast('Remplis tous les champs !', 'error'); return; }
+  const h1 = await sha256(p1), h2 = await sha256(p2);
+  const b64 = btoa(token), mid = Math.floor(b64.length / 2);
+  const tk = [b64.slice(mid), b64.slice(0, mid)];
+  const code = `// Me&U — Config\nwindow.CFG = {\n  _tk: ["${tk[0]}","${tk[1]}"],\n  owner: "${owner}",\n  repo:  "${repo}",\n  users: {\n    user1: { name: "${n1}", emoji: "${e1}", hash: "${h1}" },\n    user2: { name: "${n2}", emoji: "${e2}", hash: "${h2}" }\n  }\n};`;
+  document.getElementById('setup-code').value = code;
+  const out = document.getElementById('setup-result');
+  out.style.display = 'block';
+  out.scrollIntoView({ behavior: 'smooth' });
+}
+function copyConfig() {
+  const ta = document.getElementById('setup-code'); ta.select(); document.execCommand('copy');
+  const btn = document.getElementById('copy-btn');
+  btn.innerHTML = `<span class="icon"><i data-lucide="check" width="14" height="14"></i></span><span>Copié !</span>`;
+  lucide.createIcons({ nodes: [btn] });
+  setTimeout(() => {
+    btn.innerHTML = `<span class="icon"><i data-lucide="copy" width="14" height="14"></i></span><span>Copier le code</span>`;
+    lucide.createIcons({ nodes: [btn] });
+  }, 2000);
+}
+
+// ─────────────────────────────────────────
+// PROFILES & AVATARS SYSTEM
+// ─────────────────────────────────────────
+let PROFILES = {};
+
+function getPartnerId() {
+  return ME.id === 'user1' ? 'user2' : 'user1';
+}
+function getUserProfile(uid) {
+  const base = (CFG.users && CFG.users[uid]) ? CFG.users[uid] : { name: uid, emoji: '👤' };
+  if (PROFILES && PROFILES[uid]) {
+    return { ...base, ...PROFILES[uid] };
+  }
+  return base;
+}
+
+function renderAvatarHtml(uid, extraClass = '', styleStr = '') {
+  const p = getUserProfile(uid);
+  if (p.avatarPath) {
+    const src = `https://raw.githubusercontent.com/${CFG.owner}/${CFG.repo}/main/${p.avatarPath}?v=${p.ts || 1}`;
+    return `<div class="${extraClass} avatar-img-box" style="${styleStr}"><img src="${src}" alt="${esc(p.name)}" class="avatar-img"></div>`;
+  }
+  return `<div class="${extraClass}" style="${styleStr}">${p.emoji || '👤'}</div>`;
+}
+
+function updateHeaderUserUI() {
+  if (!ME) return;
+  const current = getUserProfile(ME.id);
+  ME.name = current.name;
+  ME.emoji = current.emoji;
+
+  const nameEl = document.getElementById('tb-name');
+  if (nameEl) nameEl.textContent = current.name;
+
+  const avWrap = document.getElementById('tb-av-wrap');
+  if (avWrap) avWrap.innerHTML = renderAvatarHtml(ME.id, 'topbar-avatar');
+}
+
+// ── SETTINGS MODAL ──
+let pickedSettingsAvatarFile = null;
+let removeAvatarFlag = false;
+
+function openSettingsModal() {
+  if (!ME) return;
+  const profile = getUserProfile(ME.id);
+  document.getElementById('settings-name').value = profile.name || '';
+  document.getElementById('settings-emoji').value = profile.emoji || '';
+  document.getElementById('settings-password').value = '';
+  document.getElementById('settings-status').textContent = '';
+  document.getElementById('btn-save-settings').disabled = false;
+  pickedSettingsAvatarFile = null;
+  removeAvatarFlag = false;
+
+  const avBox = document.getElementById('settings-av-box');
+  if (avBox) {
+    avBox.innerHTML = renderAvatarHtml(ME.id, '', 'width:100%;height:100%');
+  }
+
+  const remBtn = document.getElementById('btn-remove-photo');
+  if (remBtn) remBtn.style.display = profile.avatarPath ? 'block' : 'none';
+
+  document.getElementById('settings-modal').classList.add('open');
+}
+
+function closeSettingsModal() {
+  document.getElementById('settings-modal').classList.remove('open');
+  document.getElementById('settings-av-input').value = '';
+  pickedSettingsAvatarFile = null;
+  removeAvatarFlag = false;
+}
+
+function bgCloseSettings(e) {
+  if (e.target === e.currentTarget) closeSettingsModal();
+}
+
+function previewSettingsAvatar(e) {
+  pickedSettingsAvatarFile = e.target.files[0]; if (!pickedSettingsAvatarFile) return;
+  removeAvatarFlag = false;
+  const avBox = document.getElementById('settings-av-box');
+  if (avBox) {
+    avBox.innerHTML = `<img src="${URL.createObjectURL(pickedSettingsAvatarFile)}" class="avatar-img">`;
+  }
+  const remBtn = document.getElementById('btn-remove-photo');
+  if (remBtn) remBtn.style.display = 'block';
+}
+
+function removeSettingsAvatar() {
+  pickedSettingsAvatarFile = null;
+  removeAvatarFlag = true;
+  const profile = getUserProfile(ME.id);
+  const avBox = document.getElementById('settings-av-box');
+  if (avBox) avBox.textContent = profile.emoji || '👤';
+  document.getElementById('btn-remove-photo').style.display = 'none';
+}
+
+function setSettingsStatus(msg, showSpinner = false) {
+  const el = document.getElementById('settings-status');
+  if (!msg) { el.textContent = ''; return; }
+  el.innerHTML = showSpinner ? `<div class="spinner"></div> ${msg}` : msg;
+}
+
+async function saveSettings() {
+  const newName = document.getElementById('settings-name').value.trim();
+  const newEmoji = document.getElementById('settings-emoji').value.trim() || '🌸';
+  const newPw = document.getElementById('settings-password').value;
+
+  if (!newName) {
+    setSettingsStatus('Le prénom ne peut pas être vide');
+    showToast('Le prénom ne peut pas être vide', 'error'); return;
+  }
+
+  document.getElementById('btn-save-settings').disabled = true;
+  let avatarPath = PROFILES[ME.id]?.avatarPath || null;
+
+  if (removeAvatarFlag) {
+    avatarPath = null;
+  } else if (pickedSettingsAvatarFile) {
+    if (pickedSettingsAvatarFile.size > 10 * 1024 * 1024) {
+      setSettingsStatus('Photo trop lourde (max 10 Mo)');
+      showToast('Photo trop lourde — max 10 Mo', 'error');
+      document.getElementById('btn-save-settings').disabled = false; return;
+    }
+    setSettingsStatus('Upload de la photo de profil…', true);
+    try {
+      const ext = pickedSettingsAvatarFile.name.split('.').pop().toLowerCase();
+      avatarPath = `photos/avatar_${ME.id}_${Date.now()}.${ext}`;
+      await ghPutBinary(avatarPath, await pickedSettingsAvatarFile.arrayBuffer(), null, `Avatar: ${avatarPath}`);
+    } catch(e) {
+      console.error('Avatar upload error:', e);
+      setSettingsStatus('Erreur upload avatar : ' + e.message);
+      showToast('Échec upload photo de profil', 'error');
+      document.getElementById('btn-save-settings').disabled = false; return;
+    }
+  }
+
+  setSettingsStatus('Enregistrement du profil…', true);
+  PROFILES[ME.id] = PROFILES[ME.id] || {};
+  PROFILES[ME.id].name = newName;
+  PROFILES[ME.id].emoji = newEmoji;
+  PROFILES[ME.id].avatarPath = avatarPath;
+  PROFILES[ME.id].ts = Date.now();
+
+  if (newPw) {
+    PROFILES[ME.id].hash = await sha256(newPw);
+  }
+
+  try {
+    await savePosts();
+    closeSettingsModal();
+    updateHeaderUserUI();
+    renderFeed();
+    updateNotificationsUI();
+    showToast('Profil mis à jour avec succès !', 'success');
+  } catch(e) {
+    console.error('Save settings error:', e);
+    setSettingsStatus('Erreur d\'enregistrement');
+    showToast('Erreur d\'enregistrement', 'error');
+    document.getElementById('btn-save-settings').disabled = false;
+  }
+}
+
+// ─────────────────────────────────────────
+// AUTH
+// ─────────────────────────────────────────
+function bootAuth() {
+  const u1 = getUserProfile('user1');
+  const u2 = getUserProfile('user2');
+  document.getElementById('nm-u1').textContent = u1.name;
+  document.getElementById('nm-u2').textContent = u2.name;
+
+  const av1 = document.getElementById('av-u1');
+  if (av1) av1.innerHTML = u1.avatarPath ? `<img src="https://raw.githubusercontent.com/${CFG.owner}/${CFG.repo}/main/${u1.avatarPath}?v=${u1.ts||1}" class="avatar-img">` : u1.emoji;
+
+  const av2 = document.getElementById('av-u2');
+  if (av2) av2.innerHTML = u2.avatarPath ? `<img src="https://raw.githubusercontent.com/${CFG.owner}/${CFG.repo}/main/${u2.avatarPath}?v=${u2.ts||1}" class="avatar-img">` : u2.emoji;
+
+  document.getElementById('auth-screen').style.display = 'flex';
+}
+let selectedUid = 'user1';
+function selectUser(uid) {
+  selectedUid = uid;
+  ['user1','user2'].forEach(u => {
+    document.getElementById(`btn-${u==='user1'?'u1':'u2'}`).classList.toggle('active', u === uid);
+  });
+  document.getElementById('auth-pw').value = '';
+  document.getElementById('auth-err').textContent = '';
+}
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+async function doLogin() {
+  const pw = document.getElementById('auth-pw').value;
+  const err = document.getElementById('auth-err');
+  if (!pw) {
+    err.innerHTML = `<i data-lucide="alert-circle" width="14" height="14"></i> Entre ton mot de passe`;
+    lucide.createIcons({ nodes: [err] }); return;
+  }
+  const hash = await sha256(pw);
+  const user = getUserProfile(selectedUid);
+  const targetHash = user.hash || CFG.users[selectedUid].hash;
+  if (hash === targetHash) {
+    ME = { id: selectedUid, ...user };
+    document.getElementById('auth-screen').style.display = 'none';
+    updateHeaderUserUI();
+    document.getElementById('app').style.display = 'block';
+    await loadPosts();
+    updateNotificationsUI();
+    updatePushToggleUI();
+    await checkAndNotifyOnLogin();
+    startBackgroundPolling();
+  } else {
+    err.innerHTML = `<i data-lucide="x-circle" width="14" height="14"></i> Mot de passe incorrect`;
+    lucide.createIcons({ nodes: [err] });
+    document.getElementById('auth-pw').value = '';
+  }
+}
+function doLogout() {
+  if (pollingInterval) clearInterval(pollingInterval);
+  ME = null; POSTS = []; DATA_SHA = null;
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('auth-pw').value = '';
+  document.getElementById('auth-err').textContent = '';
+  document.getElementById('feed').querySelectorAll('.post-card,.skeleton-card').forEach(c => c.remove());
+  document.getElementById('feed-empty').style.display = 'block';
+}
+
+// ─────────────────────────────────────────
+// NOTIFICATIONS SYSTEM
+// ─────────────────────────────────────────
+let READ_NOTIFS = [];
+let pollingInterval = null;
+
+function loadReadNotifs() {
+  if (!ME) return;
+  try {
+    const stored = localStorage.getItem(`meu_read_notifs_${ME.id}`);
+    READ_NOTIFS = stored ? JSON.parse(stored) : [];
+  } catch(e) { READ_NOTIFS = []; }
+}
+
+function saveReadNotifs() {
+  if (!ME) return;
+  try {
+    localStorage.setItem(`meu_read_notifs_${ME.id}`, JSON.stringify(READ_NOTIFS));
+  } catch(e) {}
+}
+
+function playNotificationSound() {
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    const ctx = new AudioContext();
+    if (ctx.state === 'suspended') ctx.resume();
+
+    const now = ctx.currentTime;
+    const osc1 = ctx.createOscillator();
+    const osc2 = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc1.type = 'sine';
+    osc1.frequency.setValueAtTime(523.25, now); // C5
+    osc1.frequency.exponentialRampToValueAtTime(659.25, now + 0.12); // E5
+
+    osc2.type = 'triangle';
+    osc2.frequency.setValueAtTime(1046.5, now); // C6
+    osc2.frequency.exponentialRampToValueAtTime(1318.5, now + 0.12); // E6
+
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.15, now + 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+
+    osc1.connect(gain);
+    osc2.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc1.start(now);
+    osc2.start(now);
+    osc1.stop(now + 0.45);
+    osc2.stop(now + 0.45);
+  } catch(e) { console.error('Audio play error:', e); }
+}
+
+function getNotifications() {
+  if (!ME || !POSTS) return [];
+  const list = [];
+  const partnerId = ME.id === 'user1' ? 'user2' : 'user1';
+  const partner = CFG.users[partnerId] || { name: 'Votre partenaire', emoji: '❤️' };
+
+  POSTS.forEach(p => {
+    // 1. Partner shared a moment
+    if (p.userId === partnerId) {
+      list.push({
+        id: `post_${p.id}`,
+        postId: p.id,
+        type: 'post',
+        icon: 'image',
+        text: `<strong>${partner.name}</strong> a partagé un nouveau moment`,
+        ts: p.ts
+      });
+    }
+
+    // 2. Partner commented
+    (p.comments || []).forEach((c, idx) => {
+      if (c.userId === partnerId) {
+        const snippet = c.text.length > 35 ? c.text.slice(0, 35) + '…' : c.text;
+        const targetLabel = p.userId === ME.id ? 'votre moment' : 'un moment';
+        list.push({
+          id: `cmt_${p.id}_${c.ts}_${idx}`,
+          postId: p.id,
+          type: 'comment',
+          icon: 'message-square',
+          text: `<strong>${partner.name}</strong> a commenté ${targetLabel} : <em>« ${esc(snippet)} »</em>`,
+          ts: c.ts
+        });
+      }
+    });
+
+    // 3. Partner reacted
+    (p.reactions || []).forEach(r => {
+      if (r.userId === partnerId) {
+        const targetLabel = p.userId === ME.id ? 'votre moment' : 'un moment';
+        list.push({
+          id: `rxn_${p.id}_${r.userId}_${r.emoji}`,
+          postId: p.id,
+          type: 'reaction',
+          icon: 'heart',
+          text: `<strong>${partner.name}</strong> a réagi ${r.emoji} à ${targetLabel}`,
+          ts: p.ts || Date.now()
+        });
+      }
+    });
+  });
+
+  return list.sort((a,b) => b.ts - a.ts);
+}
+
+function updateNotificationsUI() {
+  loadReadNotifs();
+  const notifs = getNotifications();
+  const unreadList = notifs.filter(n => !READ_NOTIFS.includes(n.id));
+  const badge = document.getElementById('notif-badge');
+  const listEl = document.getElementById('notif-list');
+
+  if (unreadList.length > 0) {
+    badge.textContent = unreadList.length > 99 ? '99+' : unreadList.length;
+    badge.style.display = 'flex';
+  } else {
+    badge.style.display = 'none';
+  }
+
+  if (!listEl) return;
+
+  if (notifs.length === 0) {
+    listEl.innerHTML = `
+      <div class="notif-empty">
+        <span class="icon" style="opacity:0.5"><i data-lucide="bell-off" width="26" height="26"></i></span>
+        <span>Aucune notification pour le moment</span>
+      </div>`;
+    lucide.createIcons({ nodes: [listEl] });
+    return;
+  }
+
+  listEl.innerHTML = notifs.map(n => {
+    const isUnread = !READ_NOTIFS.includes(n.id);
+    const dateStr = formatNotifTime(n.ts);
+    return `
+      <div class="notif-item${isUnread ? ' unread' : ''}" onclick="clickNotification('${n.id}', '${n.postId}')">
+        <div class="notif-icon-box icon">
+          <i data-lucide="${n.icon}" width="16" height="16"></i>
+        </div>
+        <div class="notif-body">
+          <div class="notif-msg">${n.text}</div>
+          <div class="notif-date">${dateStr}</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  lucide.createIcons({ nodes: [listEl] });
+}
+
+function formatNotifTime(ts) {
+  if (!ts) return '';
+  const now = Date.now();
+  const diff = Math.floor((now - ts) / 1000);
+  if (diff < 60) return "À l'instant";
+  if (diff < 3600) return `Il y a ${Math.floor(diff / 60)} min`;
+  if (diff < 86400) return `Il y a ${Math.floor(diff / 3600)} h`;
+  return new Date(ts).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+}
+
+function toggleNotifPanel() {
+  const panel = document.getElementById('notif-panel');
+  const btn = document.getElementById('notif-btn');
+  if (!panel) return;
+  const isOpen = panel.classList.toggle('open');
+  btn.classList.toggle('active', isOpen);
+
+  if (isOpen) {
+    updateNotificationsUI();
+    setTimeout(() => {
+      const closeHandler = (e) => {
+        if (!panel.contains(e.target) && !btn.contains(e.target)) {
+          panel.classList.remove('open');
+          btn.classList.remove('active');
+          document.removeEventListener('click', closeHandler);
+        }
+      };
+      document.addEventListener('click', closeHandler);
+    }, 10);
+  }
+}
+
+function clickNotification(notifId, postId) {
+  if (!READ_NOTIFS.includes(notifId)) {
+    READ_NOTIFS.push(notifId);
+    saveReadNotifs();
+    updateNotificationsUI();
+  }
+
+  document.getElementById('notif-panel')?.classList.remove('open');
+  document.getElementById('notif-btn')?.classList.remove('active');
+
+  const card = document.getElementById(`card-${postId}`);
+  if (card) {
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    card.classList.remove('highlight-target');
+    void card.offsetWidth;
+    card.classList.add('highlight-target');
+    setTimeout(() => card.classList.remove('highlight-target'), 2500);
+  }
+}
+
+function markAllNotifsRead() {
+  const notifs = getNotifications();
+  notifs.forEach(n => {
+    if (!READ_NOTIFS.includes(n.id)) READ_NOTIFS.push(n.id);
+  });
+  saveReadNotifs();
+  updateNotificationsUI();
+  showToast('Toutes les notifications sont marquées comme lues', 'success');
+}
+
+async function requestSystemNotifPermission() {
+  if (!('Notification' in window)) {
+    showToast('Notifications non supportées par ce navigateur', 'error');
+    return;
+  }
+
+  if (Notification.permission === 'granted') {
+    await subscribeToPush();
+    showToast('Notifications activées 🔔', 'success');
+    return;
+  }
+
+  const permission = await Notification.requestPermission();
+  if (permission === 'granted') {
+    const subscribed = await subscribeToPush();
+    showToast('Notifications activées !', 'success');
+    updatePushToggleUI();
+    new Notification('Me&U', {
+      body: subscribed
+        ? 'Vous recevrez désormais les notifications, même app fermée !'
+        : 'Vous recevrez les notifications quand l\'app est ouverte.',
+      icon: 'favicon.ico'
+    });
+  } else {
+    showToast('Autorisation refusée', 'error');
+  }
+}
+
+function updatePushToggleUI() {
+  const btn = document.getElementById('push-toggle-btn');
+  if (!btn) return;
+  if ('Notification' in window && Notification.permission === 'granted') {
+    btn.classList.add('active');
+    btn.title = "Notifications push activées";
+  } else {
+    btn.classList.remove('active');
+    btn.title = "Activer les notifications push";
+  }
+}
+
+function sendSystemNotification(title, body) {
+  if ('Notification' in window && Notification.permission === 'granted') {
+    try {
+      new Notification(title, { body, icon: 'favicon.ico' });
+    } catch(e) {}
+  }
+}
+
+// ─────────────────────────────────────────
+// PUSH RÉEL (fonctionne app fermée)
+// ─────────────────────────────────────────
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+}
+
+async function subscribeToPush() {
+  if (!CFG.push || !CFG.push.workerUrl || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+    return false;
+  }
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(CFG.push.vapidPublicKey)
+      });
+    }
+    await fetch(`${CFG.push.workerUrl}/subscribe`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${CFG.push.secret}` },
+      body: JSON.stringify({ userId: ME.id, subscription: sub.toJSON() })
+    });
+    return true;
+  } catch(e) {
+    console.error('Push subscribe error:', e);
+    return false;
+  }
+}
+
+async function unsubscribeFromPush() {
+  if (!('serviceWorker' in navigator)) return;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    if (sub) {
+      const endpoint = sub.endpoint;
+      await sub.unsubscribe();
+      if (CFG.push && CFG.push.workerUrl && ME) {
+        fetch(`${CFG.push.workerUrl}/unsubscribe`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${CFG.push.secret}` },
+          body: JSON.stringify({ userId: ME.id, endpoint })
+        }).catch(() => {});
+      }
+    }
+  } catch(e) { console.error('Push unsubscribe error:', e); }
+}
+
+// Envoie un push réel au partenaire (arrive même si son app est fermée)
+async function sendPushToPartner(title, body, postId) {
+  if (!CFG.push || !CFG.push.workerUrl || !ME) return;
+  try {
+    await fetch(`${CFG.push.workerUrl}/send`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${CFG.push.secret}` },
+      body: JSON.stringify({
+        userId: getPartnerId(),
+        title,
+        body,
+        url: postId ? `./#post-${postId}` : './',
+        tag: 'meu'
+      })
+    });
+  } catch(e) {
+    console.error('Push send error:', e);
+  }
+}
+
+async function silentCheckForUpdates() {
+  if (!ME) return;
+  try {
+    const file = await ghGet('data.json');
+    if (!file || file.sha === DATA_SHA) return;
+
+    const json = decodeURIComponent(escape(atob(file.content.replace(/\n/g,''))));
+    const newPosts = JSON.parse(json).posts || [];
+    DATA_SHA = file.sha;
+
+    const oldNotifIds = getNotifications().map(n => n.id);
+    POSTS = newPosts;
+    const currentNotifs = getNotifications();
+    const freshNotifs = currentNotifs.filter(n => !oldNotifIds.includes(n.id) && !READ_NOTIFS.includes(n.id));
+
+    renderFeed();
+    updateNotificationsUI();
+
+    if (freshNotifs.length > 0) {
+      playNotificationSound();
+      const latest = freshNotifs[0];
+      const cleanMsg = latest.text.replace(/<[^>]*>/g, '');
+      showToast(cleanMsg, 'success');
+      sendSystemNotification('Me&U — Nouvelle activité', cleanMsg);
+    }
+  } catch(e) {
+    // Silent fail in background polling
+  }
+}
+
+function startBackgroundPolling() {
+  if (pollingInterval) clearInterval(pollingInterval);
+  pollingInterval = setInterval(silentCheckForUpdates, 30000);
+}
+
+async function checkAndNotifyOnLogin() {
+  if (!ME) return;
+
+  // 1. Demander automatiquement la permission navigateur si pas encore configurée
+  if ('Notification' in window && Notification.permission === 'default') {
+    try {
+      await Notification.requestPermission();
+      updatePushToggleUI();
+    } catch(e) {}
+  }
+  // S'assurer que l'abonnement push est bien enregistré (utile après une mise à jour de l'app)
+  if ('Notification' in window && Notification.permission === 'granted') {
+    subscribeToPush();
+  }
+
+  // 2. Vérifier s'il y a des notifications non lues lors de la connexion
+  loadReadNotifs();
+  const notifs = getNotifications();
+  const unreadList = notifs.filter(n => !READ_NOTIFS.includes(n.id));
+
+  if (unreadList.length > 0) {
+    playNotificationSound();
+    const partnerId = ME.id === 'user1' ? 'user2' : 'user1';
+    const partner = CFG.users[partnerId] || { name: 'Votre partenaire' };
+    const title = `Me&U — Bon retour ${ME.name} !`;
+    const body = unreadList.length === 1
+      ? unreadList[0].text.replace(/<[^>]*>/g, '')
+      : `Vous avez ${unreadList.length} nouvelle(s) notification(s) de ${partner.name}.`;
+
+    showToast(body, 'success');
+    sendSystemNotification(title, body);
+  } else {
+    showToast(`Bienvenue ${ME.name} ! ✨`, 'success');
+  }
+}
+
+// ─────────────────────────────────────────
+// GITHUB HELPERS
+// ─────────────────────────────────────────
+function getToken() {
+  if (CFG._tk) return atob([...CFG._tk].reverse().join(''));
+  return CFG.token || '';
+}
+const GH = () => ({
+  base: `https://api.github.com/repos/${CFG.owner}/${CFG.repo}/contents`,
+  headers: {
+    Authorization: `token ${getToken()}`,
+    Accept: 'application/vnd.github.v3+json',
+    'Content-Type': 'application/json'
+  }
+});
+async function ghGet(path) {
+  const { base, headers } = GH();
+  const r = await fetch(`${base}/${path}`, { headers });
+  if (r.status === 404) return null;
+  if (!r.ok) throw new Error(`GitHub GET ${path}: ${r.status}`);
+  return r.json();
+}
+async function ghPut(path, content, sha, message) {
+  const { base, headers } = GH();
+  const body = { message, content: btoa(unescape(encodeURIComponent(content))) };
+  if (sha) body.sha = sha;
+  const r = await fetch(`${base}/${path}`, { method:'PUT', headers, body: JSON.stringify(body) });
+  if (!r.ok) throw new Error(`GitHub PUT ${path}: ${r.status}`);
+  return r.json();
+}
+async function ghPutBinary(path, arrayBuffer, sha, message) {
+  const { base, headers } = GH();
+  const bytes = new Uint8Array(arrayBuffer);
+  const CHUNK = 8192; let binary = '';
+  for (let i = 0; i < bytes.length; i += CHUNK) binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+  const body = { message, content: btoa(binary) };
+  if (sha) body.sha = sha;
+  const r = await fetch(`${base}/${path}`, { method:'PUT', headers, body: JSON.stringify(body) });
+  if (!r.ok) {
+    let detail = r.status;
+    try { const j = await r.json(); detail = j.message || r.status; } catch(_) {}
+    throw new Error(`GitHub ${r.status}: ${detail}`);
+  }
+  return r.json();
+}
+
+// ─────────────────────────────────────────
+// SKELETON LOADERS
+// ─────────────────────────────────────────
+function showSkeletons(count = 3) {
+  const feed = document.getElementById('feed');
+  document.getElementById('feed-empty').style.display = 'none';
+  for (let i = 0; i < count; i++) {
+    const sk = document.createElement('div');
+    sk.className = 'skeleton-card';
+    sk.innerHTML = `
+      <div style="padding:13px 14px 10px;display:flex;align-items:center;gap:10px">
+        <div class="skel" style="width:36px;height:36px;border-radius:50%;flex-shrink:0"></div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+          <div class="skel" style="height:12px;width:40%"></div>
+          <div class="skel" style="height:10px;width:25%"></div>
+        </div>
+      </div>
+      <div class="skel" style="margin:0;border-radius:0;aspect-ratio:4/3;width:100%"></div>
+      <div style="padding:13px 14px 18px;display:flex;flex-direction:column;gap:8px">
+        <div class="skel" style="height:12px;width:90%"></div>
+        <div class="skel" style="height:12px;width:65%"></div>
+      </div>`;
+    feed.appendChild(sk);
+  }
+}
+function clearSkeletons() {
+  document.getElementById('feed').querySelectorAll('.skeleton-card').forEach(s => s.remove());
+}
+
+// ─────────────────────────────────────────
+// DATA.JSON
+// ─────────────────────────────────────────
+async function loadPosts() {
+  showSkeletons(3);
+  try {
+    const file = await ghGet('data.json');
+    if (file) {
+      DATA_SHA = file.sha;
+      const json = decodeURIComponent(escape(atob(file.content.replace(/\n/g,''))));
+      const parsed = JSON.parse(json);
+      POSTS = parsed.posts || [];
+      PROFILES = parsed.profiles || {};
+    } else {
+      const res = await ghPut('data.json', '{"posts":[],"profiles":{}}', null, 'Init data.json');
+      DATA_SHA = res.content.sha;
+      POSTS = []; PROFILES = {};
+    }
+  } catch(e) {
+    console.error(e);
+    POSTS = []; PROFILES = {};
+    showToast('Erreur de chargement', 'error');
+  }
+  clearSkeletons();
+  updateHeaderUserUI();
+  renderFeed();
+  updateNotificationsUI();
+}
+
+async function refreshFeed() {
+  const btn = document.getElementById('refresh-btn');
+  btn.classList.add('spinning');
+  await loadPosts();
+  btn.classList.remove('spinning');
+  showToast('Fil mis à jour', 'success');
+}
+
+async function savePosts() {
+  const json = JSON.stringify({ posts: POSTS, profiles: PROFILES }, null, 2);
+  try {
+    const res = await ghPut('data.json', json, DATA_SHA, 'Update data.json');
+    DATA_SHA = res.content.sha;
+  } catch(e) {
+    if (e.message && (e.message.includes('409') || e.message.includes('422'))) {
+      const file = await ghGet('data.json');
+      if (file) DATA_SHA = file.sha;
+      const res2 = await ghPut('data.json', json, DATA_SHA, 'Update data.json');
+      DATA_SHA = res2.content.sha;
+    } else throw e;
+  }
+}
+
+// ─────────────────────────────────────────
+// FEED
+// ─────────────────────────────────────────
+function renderFeed() {
+  const feed = document.getElementById('feed');
+  feed.querySelectorAll('.post-card').forEach(c => c.remove());
+  if (!POSTS.length) { document.getElementById('feed-empty').style.display = 'block'; return; }
+  document.getElementById('feed-empty').style.display = 'none';
+  [...POSTS].sort((a,b) => b.ts - a.ts).forEach(p => feed.appendChild(buildCard(p)));
+  lucide.createIcons();
+}
+
+function buildCard(post) {
+  const div = document.createElement('div');
+  div.className = 'post-card';
+  div.id = `card-${post.id}`;
+  div.style.position = 'relative';
+
+  const author = getUserProfile(post.userId);
+  const isOwn  = post.userId === ME.id;
+  const ts = new Date(post.ts).toLocaleDateString('fr-FR', {
+    day:'numeric', month:'long', hour:'2-digit', minute:'2-digit'
+  });
+
+  const rxMap = {};
+  (post.reactions || []).forEach(r => {
+    if (!rxMap[r.emoji]) rxMap[r.emoji] = { count:0, mine:false };
+    rxMap[r.emoji].count++;
+    if (r.userId === ME.id) rxMap[r.emoji].mine = true;
+  });
+  const rxBtns = Object.entries(rxMap).map(([e,v]) =>
+    `<button class="rxn-btn${v.mine?' mine':''}" onclick="toggleRxn('${post.id}','${e}')">${e}<span class="cnt">${v.count>1?v.count:''}</span></button>`
+  ).join('');
+
+  const cmtCount = (post.comments || []).length;
+  const comments = (post.comments || []).map(c => {
+    const cu = getUserProfile(c.userId);
+    return `<div class="comment-item">
+      ${renderAvatarHtml(c.userId, 'c-avatar')}
+      <div class="c-bubble"><div class="c-author">${esc(cu.name)}</div><div class="c-text">${esc(c.text)}</div></div>
+    </div>`;
+  }).join('');
+
+  const toggleLabel = cmtCount === 0 ? 'Commenter'
+    : cmtCount === 1 ? '1 commentaire' : `${cmtCount} commentaires`;
+
+  const imgSrc = post.imgPath
+    ? `https://raw.githubusercontent.com/${CFG.owner}/${CFG.repo}/main/${post.imgPath}`
+    : null;
+
+  const imgHtml = imgSrc
+    ? `<div class="post-img-wrap" onclick="openLightbox('${imgSrc}')" title="Voir en grand">
+         <div class="img-skeleton" id="il-${post.id}">
+           <span class="icon"><i data-lucide="image" width="32" height="32"></i></span>
+         </div>
+         <img class="post-img" src="${imgSrc}" alt="photo" loading="lazy"
+              onload="document.getElementById('il-${post.id}')?.remove()"
+              onerror="this.parentElement.innerHTML='<div style=\\'padding:40px;text-align:center;color:var(--text-muted);display:flex;align-items:center;justify-content:center;gap:8px\\'><i data-lucide=\\'image-off\\' width=\\'24\\'></i> Photo indisponible</div>'; lucide.createIcons()">
+       </div>`
+    : '';
+
+  const deleteHtml = isOwn
+    ? `<button class="post-del" onclick="toggleDeleteConfirm('${post.id}')" title="Supprimer">
+         <i data-lucide="trash-2" width="16" height="16"></i>
+       </button>
+       <div class="delete-confirm" id="dc-${post.id}">
+         <span class="del-label">Supprimer ?</span>
+         <button class="del-no" onclick="toggleDeleteConfirm('${post.id}')">
+           <i data-lucide="x" width="12" height="12"></i> Non
+         </button>
+         <button class="del-yes" onclick="deletePost('${post.id}')">
+           <i data-lucide="trash-2" width="12" height="12"></i> Oui
+         </button>
+       </div>`
+    : '';
+
+  div.innerHTML = `
+    <div class="post-header">
+      ${renderAvatarHtml(post.userId, 'post-avatar')}
+      <div class="post-meta">
+        <div class="post-author">${author.name}</div>
+        <div class="post-time">${ts}</div>
+      </div>
+      ${deleteHtml}
+    </div>
+    ${imgHtml}
+    <div class="post-body">
+      ${post.caption ? `<div class="post-caption">${esc(post.caption)}</div>` : ''}
+      <div class="reactions-row" id="rxrow-${post.id}">
+        ${rxBtns}
+        <button class="add-rxn-btn" onclick="togglePicker('${post.id}')">
+          <i data-lucide="smile-plus" width="15" height="15"></i>
+        </button>
+      </div>
+    </div>
+    <div id="epwrap-${post.id}"></div>
+    <div class="comments-wrap">
+      <button class="comments-toggle" id="ctbtn-${post.id}" onclick="toggleComments('${post.id}')">
+        <span class="icon ct-arrow"><i data-lucide="chevron-down" width="14" height="14"></i></span>
+        <span id="ct-label-${post.id}">${toggleLabel}</span>
+      </button>
+      <div class="comments-list" id="cmts-${post.id}">${comments}
+        <div class="c-input-row">
+          <input class="c-input" type="text" placeholder="Un commentaire…" id="ci-${post.id}"
+                 onkeydown="if(event.key==='Enter')sendComment('${post.id}')">
+          <button class="c-send" onclick="sendComment('${post.id}')">
+            <i data-lucide="send" width="14" height="14"></i>
+          </button>
+        </div>
+      </div>
+    </div>`;
+
+  return div;
+}
+
+function esc(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+}
+
+// ─────────────────────────────────────────
+// DELETE CONFIRM (inline)
+// ─────────────────────────────────────────
+function toggleDeleteConfirm(pid) {
+  const dc = document.getElementById(`dc-${pid}`);
+  if (!dc) return;
+  const isOpen = dc.classList.toggle('open');
+  if (isOpen) {
+    // Close on outside click
+    setTimeout(() => {
+      const close = (e) => {
+        if (!dc.contains(e.target)) { dc.classList.remove('open'); document.removeEventListener('click', close); }
+      };
+      document.addEventListener('click', close);
+    }, 10);
+  }
+}
+
+// ─────────────────────────────────────────
+// COMMENTS
+// ─────────────────────────────────────────
+function toggleComments(pid) {
+  const list = document.getElementById(`cmts-${pid}`);
+  const btn  = document.getElementById(`ctbtn-${pid}`);
+  const isOpen = list.classList.toggle('open');
+  btn.classList.toggle('open', isOpen);
+  if (isOpen) setTimeout(() => document.getElementById(`ci-${pid}`)?.focus(), 100);
+}
+function openComments(pid) {
+  document.getElementById(`cmts-${pid}`)?.classList.add('open');
+  document.getElementById(`ctbtn-${pid}`)?.classList.add('open');
+}
+function updateCommentToggleLabel(pid) {
+  const post = POSTS.find(p => p.id === pid); if (!post) return;
+  const c = (post.comments || []).length;
+  const label = c === 0 ? 'Commenter' : c === 1 ? '1 commentaire' : `${c} commentaires`;
+  const el = document.getElementById(`ct-label-${pid}`);
+  if (el) el.textContent = label;
+}
+async function sendComment(pid) {
+  const input = document.getElementById(`ci-${pid}`);
+  const text = input.value.trim(); if (!text) return;
+  input.value = '';
+  const post = POSTS.find(p => p.id === pid); if (!post) return;
+  post.comments = post.comments || [];
+  post.comments.push({ userId: ME.id, text, ts: Date.now() });
+  const inputRow = input.closest('.c-input-row');
+  const div = document.createElement('div');
+  div.className = 'comment-item';
+  const meProfile = getUserProfile(ME.id);
+  div.innerHTML = `${renderAvatarHtml(ME.id, 'c-avatar')}<div class="c-bubble"><div class="c-author">${esc(meProfile.name)}</div><div class="c-text">${esc(text)}</div></div>`;
+  inputRow.parentNode.insertBefore(div, inputRow);
+  updateCommentToggleLabel(pid);
+  openComments(pid);
+  try {
+    await savePosts();
+    const snippet = text.length > 60 ? text.slice(0, 60) + '…' : text;
+    sendPushToPartner(`${meProfile.name} a commenté`, snippet, pid);
+  } catch(e) { console.error('Comment save failed:', e); showToast('Erreur de sauvegarde', 'error'); }
+}
+
+// ─────────────────────────────────────────
+// REACTIONS
+// ─────────────────────────────────────────
+function togglePicker(pid) {
+  const wrap = document.getElementById(`epwrap-${pid}`);
+  let picker = document.getElementById(`ep-${pid}`);
+  if (!picker) {
+    const html = document.getElementById('ep-tpl').innerHTML.replaceAll('ID', pid);
+    wrap.innerHTML = html;
+    picker = document.getElementById(`ep-${pid}`);
+    picker.querySelectorAll('.ep-btn').forEach(btn => {
+      btn.addEventListener('click', () => toggleRxn(pid, btn.dataset.e));
+    });
+  }
+  picker.classList.toggle('open');
+}
+async function toggleRxn(pid, emoji) {
+  const post = POSTS.find(p => p.id === pid); if (!post) return;
+  post.reactions = post.reactions || [];
+  const idx = post.reactions.findIndex(r => r.userId === ME.id && r.emoji === emoji);
+  const wasAdded = idx < 0;
+  if (idx >= 0) post.reactions.splice(idx,1);
+  else post.reactions.push({ userId: ME.id, emoji });
+  document.getElementById(`ep-${pid}`)?.classList.remove('open');
+  const rxMap = {};
+  post.reactions.forEach(r => {
+    if (!rxMap[r.emoji]) rxMap[r.emoji] = { count:0, mine:false };
+    rxMap[r.emoji].count++;
+    if (r.userId === ME.id) rxMap[r.emoji].mine = true;
+  });
+  const row = document.getElementById(`rxrow-${pid}`);
+  if (row) {
+    row.innerHTML = Object.entries(rxMap).map(([e,v]) =>
+      `<button class="rxn-btn${v.mine?' mine':''}" onclick="toggleRxn('${pid}','${e}')">${e}<span class="cnt">${v.count>1?v.count:''}</span></button>`
+    ).join('') + `<button class="add-rxn-btn" onclick="togglePicker('${pid}')"><i data-lucide="smile-plus" width="15" height="15"></i></button>`;
+    lucide.createIcons({ nodes: [row] });
+  }
+  await savePosts();
+  if (wasAdded) {
+    const meProfile = getUserProfile(ME.id);
+    sendPushToPartner(`${meProfile.name} a réagi ${emoji}`, 'à votre moment', pid);
+  }
+}
+
+// ─────────────────────────────────────────
+// NEW POST
+// ─────────────────────────────────────────
+let pickedFile = null;
+
+function openModal()  { document.getElementById('modal').classList.add('open'); }
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  document.getElementById('caption').value = '';
+  document.getElementById('file-in').value = '';
+  document.getElementById('preview').style.display = 'none';
+  document.getElementById('uz').style.display = 'block';
+  document.getElementById('up-status').textContent = '';
+  document.getElementById('btn-post').disabled = false;
+  document.getElementById('char-count').textContent = '0 / 500';
+  document.getElementById('char-count').classList.remove('warn');
+  pickedFile = null;
+}
+function bgClose(e) { if (e.target === e.currentTarget) closeModal(); }
+
+function updateCharCount() {
+  const len = document.getElementById('caption').value.length;
+  const el = document.getElementById('char-count');
+  el.textContent = `${len} / 500`;
+  el.classList.toggle('warn', len > 450);
+}
+
+function previewImg(e) {
+  pickedFile = e.target.files[0]; if (!pickedFile) return;
+  const prev = document.getElementById('preview');
+  prev.src = URL.createObjectURL(pickedFile);
+  prev.style.display = 'block';
+  document.getElementById('uz').style.display = 'none';
+}
+
+function setStatus(msg, showSpinner = false) {
+  const el = document.getElementById('up-status');
+  if (!msg) { el.textContent = ''; return; }
+  el.innerHTML = showSpinner ? `<div class="spinner"></div> ${msg}` : msg;
+}
+
+async function submitPost() {
+  const caption = document.getElementById('caption').value.trim();
+  if (!pickedFile && !caption) return;
+  document.getElementById('btn-post').disabled = true;
+  let imgPath = null;
+
+  if (pickedFile) {
+    if (pickedFile.size > 10 * 1024 * 1024) {
+      setStatus('Photo trop lourde (max 10 Mo)');
+      showToast('Photo trop lourde — max 10 Mo', 'error');
+      document.getElementById('btn-post').disabled = false; return;
+    }
+    setStatus('Upload de la photo…', true);
+    try {
+      const ext = pickedFile.name.split('.').pop().toLowerCase();
+      imgPath = `photos/${Date.now()}_${Math.random().toString(36).slice(2,6)}.${ext}`;
+      await ghPutBinary(imgPath, await pickedFile.arrayBuffer(), null, `Photo: ${imgPath}`);
+    } catch(e) {
+      console.error('Upload error:', e);
+      setStatus('Erreur upload : ' + e.message);
+      showToast('Échec de l\'upload', 'error');
+      document.getElementById('btn-post').disabled = false; return;
+    }
+  }
+
+  setStatus('Sauvegarde…', true);
+  const post = {
+    id: `p${Date.now()}${Math.random().toString(36).slice(2,5)}`,
+    userId: ME.id, caption, imgPath, ts: Date.now(), reactions: [], comments: []
+  };
+  POSTS.unshift(post);
+  try {
+    await savePosts();
+    closeModal();
+    renderFeed();
+    showToast('Moment partagé !', 'success');
+    const meProfile = getUserProfile(ME.id);
+    const snippet = caption ? (caption.length > 60 ? caption.slice(0, 60) + '…' : caption) : 'Nouvelle photo à découvrir 📸';
+    sendPushToPartner(`${meProfile.name} a partagé un nouveau moment`, snippet, post.id);
+  } catch(e) {
+    POSTS.shift();
+    setStatus('Erreur de sauvegarde');
+    showToast('Erreur de sauvegarde', 'error');
+    document.getElementById('btn-post').disabled = false;
+  }
+}
+
+// ─────────────────────────────────────────
+// DELETE
+// ─────────────────────────────────────────
+async function deletePost(pid) {
+  POSTS = POSTS.filter(p => p.id !== pid);
+  document.getElementById(`card-${pid}`)?.remove();
+  if (!POSTS.length) document.getElementById('feed-empty').style.display = 'block';
+  await savePosts();
+  showToast('Moment supprimé', '');
+}
+</script>
+</body>
+</html>

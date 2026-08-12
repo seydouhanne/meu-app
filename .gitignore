@@ -1,0 +1,5 @@
+node_modules/
+*.log
+repo.zip
+temp_extract/
+.DS_Store
