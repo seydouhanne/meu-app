@@ -772,6 +772,90 @@
     border-radius: 4px; font-size: 11px; font-family: monospace;
   }
   a { color: var(--rose-deep); }
+
+  /* ─── MOBILE RESPONSIVENESS OVERRIDES ─── */
+  @media (max-width: 580px) {
+    .topbar {
+      padding: calc(10px + var(--safe-top)) 12px 9px;
+      gap: 6px;
+    }
+    .topbar-logo {
+      font-size: 22px;
+      letter-spacing: -0.5px;
+    }
+    .topbar-right {
+      gap: 6px;
+    }
+    .topbar-name {
+      display: none;
+    }
+    .topbar-user {
+      padding: 2px;
+    }
+    .topbar-avatar, .topbar-avatar-container {
+      width: 34px; height: 34px;
+    }
+    .notif-btn, .refresh-btn, .settings-btn, .logout-btn {
+      width: 34px; height: 34px;
+      padding: 0;
+      border-radius: 50%;
+    }
+
+    /* Fixed mobile-centered notification dropdown */
+    .notif-dropdown {
+      position: fixed;
+      top: calc(56px + var(--safe-top));
+      left: 10px; right: 10px;
+      width: auto; max-width: none;
+      border-radius: 20px;
+      box-shadow: 0 16px 40px rgba(42,31,31,0.25);
+    }
+    .notif-list {
+      max-height: 55vh;
+    }
+
+    /* Feed & Post cards mobile optimizations */
+    .feed {
+      padding: calc(62px + var(--safe-top)) 0 calc(85px + var(--safe-bottom));
+    }
+    .post-card {
+      margin: 0 10px 14px;
+      border-radius: 18px;
+    }
+    .post-header {
+      padding: 11px 12px 8px;
+    }
+    .post-avatar {
+      width: 34px; height: 34px;
+    }
+    .post-author {
+      font-size: 13.5px;
+    }
+    .post-body {
+      padding: 10px 12px 6px;
+    }
+    .comments-wrap {
+      padding: 0 12px 11px;
+    }
+
+    /* Modal sheet full width / touch optimizations */
+    .modal-sheet {
+      border-radius: 24px 24px 0 0;
+      padding: 18px 16px calc(20px + var(--safe-bottom));
+      max-height: 92vh;
+    }
+    .settings-avatar-preview {
+      width: 76px; height: 76px;
+    }
+  }
+
+  @media (max-width: 360px) {
+    .topbar-right { gap: 4px; }
+    .notif-btn, .refresh-btn, .settings-btn, .logout-btn {
+      width: 32px; height: 32px;
+    }
+    .topbar-logo { font-size: 20px; }
+  }
 </style>
 </head>
 <body>
