@@ -101,6 +101,10 @@ function copyConfig() {
 function getPartnerId() {
   return ME.id === 'user1' ? 'user2' : 'user1';
 }
+function getPartnerName() {
+  const partner = CFG.users[getPartnerId()] || { name: 'Votre partenaire' };
+  return partner.name;
+}
 function getUserProfile(uid) {
   const base = (CFG.users && CFG.users[uid]) ? CFG.users[uid] : { name: uid, emoji: '👤' };
   if (PROFILES && PROFILES[uid]) {
@@ -362,63 +366,9 @@ function playNotificationSound() {
   } catch(e) { console.error('Audio play error:', e); }
 }
 
-function getNotifications() {
-  if (!ME || !POSTS) return [];
-  const list = [];
-  const partnerId = ME.id === 'user1' ? 'user2' : 'user1';
-  const partner = CFG.users[partnerId] || { name: 'Votre partenaire', emoji: '❤️' };
-
-  POSTS.forEach(p => {
-    // 1. Partner shared a moment
-    if (p.userId === partnerId) {
-      list.push({
-        id: `post_${p.id}`,
-        postId: p.id,
-        type: 'post',
-        icon: 'image',
-        text: `<strong>${partner.name}</strong> a partagé un nouveau moment`,
-        ts: p.ts
-      });
-    }
-
-    // 2. Partner commented
-    (p.comments || []).forEach((c, idx) => {
-      if (c.userId === partnerId) {
-        const snippet = c.text.length > 35 ? c.text.slice(0, 35) + '…' : c.text;
-        const targetLabel = p.userId === ME.id ? 'votre moment' : 'un moment';
-        list.push({
-          id: `cmt_${p.id}_${c.ts}_${idx}`,
-          postId: p.id,
-          type: 'comment',
-          icon: 'message-square',
-          text: `<strong>${partner.name}</strong> a commenté ${targetLabel} : <em>« ${esc(snippet)} »</em>`,
-          ts: c.ts
-        });
-      }
-    });
-
-    // 3. Partner reacted
-    (p.reactions || []).forEach(r => {
-      if (r.userId === partnerId) {
-        const targetLabel = p.userId === ME.id ? 'votre moment' : 'un moment';
-        list.push({
-          id: `rxn_${p.id}_${r.userId}_${r.emoji}`,
-          postId: p.id,
-          type: 'reaction',
-          icon: 'heart',
-          text: `<strong>${partner.name}</strong> a réagi ${r.emoji} à ${targetLabel}`,
-          ts: p.ts || Date.now()
-        });
-      }
-    });
-  });
-
-  return list.sort((a,b) => b.ts - a.ts);
-}
-
 function updateNotificationsUI() {
   loadReadNotifs();
-  const notifs = getNotifications();
+  const notifs = getNotifications(POSTS, ME.id, getPartnerName());
   const unreadList = notifs.filter(n => !READ_NOTIFS.includes(n.id));
   const badge = document.getElementById('notif-badge');
   const listEl = document.getElementById('notif-list');
@@ -458,16 +408,6 @@ function updateNotificationsUI() {
   }).join('');
 
   lucide.createIcons({ nodes: [listEl] });
-}
-
-function formatNotifTime(ts) {
-  if (!ts) return '';
-  const now = Date.now();
-  const diff = Math.floor((now - ts) / 1000);
-  if (diff < 60) return "À l'instant";
-  if (diff < 3600) return `Il y a ${Math.floor(diff / 60)} min`;
-  if (diff < 86400) return `Il y a ${Math.floor(diff / 3600)} h`;
-  return new Date(ts).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
 
 function toggleNotifPanel() {
@@ -513,7 +453,7 @@ function clickNotification(notifId, postId) {
 }
 
 function markAllNotifsRead() {
-  const notifs = getNotifications();
+  const notifs = getNotifications(POSTS, ME.id, getPartnerName());
   notifs.forEach(n => {
     if (!READ_NOTIFS.includes(n.id)) READ_NOTIFS.push(n.id);
   });
@@ -650,9 +590,10 @@ async function silentCheckForUpdates() {
     const result = await DataStore.checkForUpdates();
     if (!result) return;
 
-    const oldNotifIds = getNotifications().map(n => n.id);
+    const partnerName = getPartnerName();
+    const oldNotifIds = getNotifications(POSTS, ME.id, partnerName).map(n => n.id);
     POSTS = result.posts; PROFILES = result.profiles;
-    const currentNotifs = getNotifications();
+    const currentNotifs = getNotifications(POSTS, ME.id, partnerName);
     const freshNotifs = currentNotifs.filter(n => !oldNotifIds.includes(n.id) && !READ_NOTIFS.includes(n.id));
 
     renderFeed();
@@ -692,17 +633,16 @@ async function checkAndNotifyOnLogin() {
 
   // 2. Vérifier s'il y a des notifications non lues lors de la connexion
   loadReadNotifs();
-  const notifs = getNotifications();
+  const partnerName = getPartnerName();
+  const notifs = getNotifications(POSTS, ME.id, partnerName);
   const unreadList = notifs.filter(n => !READ_NOTIFS.includes(n.id));
 
   if (unreadList.length > 0) {
     playNotificationSound();
-    const partnerId = ME.id === 'user1' ? 'user2' : 'user1';
-    const partner = CFG.users[partnerId] || { name: 'Votre partenaire' };
     const title = `Me&U — Bon retour ${ME.name} !`;
     const body = unreadList.length === 1
       ? unreadList[0].text.replace(/<[^>]*>/g, '')
-      : `Vous avez ${unreadList.length} nouvelle(s) notification(s) de ${partner.name}.`;
+      : `Vous avez ${unreadList.length} nouvelle(s) notification(s) de ${partnerName}.`;
 
     showToast(body, 'success');
     sendSystemNotification(title, body);

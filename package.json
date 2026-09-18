@@ -1,0 +1,7 @@
+{
+  "name": "meu-app",
+  "private": true,
+  "scripts": {
+    "test": "node --test"
+  }
+}
