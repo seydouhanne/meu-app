@@ -80,13 +80,18 @@ function ghHeaders(env) {
   return {
     Authorization: `token ${env.GITHUB_TOKEN}`,
     Accept: 'application/vnd.github.v3+json',
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
+    'User-Agent': 'meu-push-worker'
   };
 }
 async function ghGetFile(path, env) {
   const r = await fetch(ghUrl(path, env), { headers: ghHeaders(env) });
   if (r.status === 404) return null;
-  if (!r.ok) throw new Error(`GitHub GET ${path}: ${r.status}`);
+  if (!r.ok) {
+    let detail = r.status;
+    try { const j = await r.json(); detail = j.message || r.status; } catch (_) {}
+    throw new Error(`GitHub GET ${path}: ${r.status} ${detail}`);
+  }
   return r.json();
 }
 
