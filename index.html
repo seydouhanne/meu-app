@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Me&U</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#c97b7b">
@@ -150,7 +150,7 @@
     <div class="topbar-right">
       <!-- Notifications -->
       <div class="notif-wrap">
-        <button class="notif-btn" onclick="toggleNotifPanel()" id="notif-btn" title="Notifications">
+        <button class="notif-btn" onclick="toggleNotifPanel()" id="notif-btn" title="Notifications" aria-label="Notifications">
           <span class="icon"><i data-lucide="bell" width="16" height="16"></i></span>
           <span class="notif-badge" id="notif-badge" style="display:none;">0</span>
         </button>
@@ -161,10 +161,10 @@
               <span>Notifications</span>
             </div>
             <div class="notif-actions">
-              <button class="notif-act-btn" onclick="markAllNotifsRead()" title="Tout marquer comme lu">
+              <button class="notif-act-btn" onclick="markAllNotifsRead()" title="Tout marquer comme lu" aria-label="Tout marquer comme lu">
                 <span class="icon"><i data-lucide="check-check" width="14" height="14"></i></span>
               </button>
-              <button class="notif-act-btn" onclick="requestSystemNotifPermission()" id="push-toggle-btn" title="Activer les notifications push">
+              <button class="notif-act-btn" onclick="requestSystemNotifPermission()" id="push-toggle-btn" title="Activer les notifications push" aria-label="Activer les notifications push">
                 <span class="icon"><i data-lucide="bell-ring" width="14" height="14"></i></span>
               </button>
             </div>
@@ -173,19 +173,16 @@
         </div>
       </div>
 
-      <button class="refresh-btn" onclick="refreshFeed()" id="refresh-btn" title="Rafraîchir">
+      <button class="refresh-btn" onclick="refreshFeed()" id="refresh-btn" title="Rafraîchir" aria-label="Rafraîchir">
         <span class="icon"><i data-lucide="refresh-cw" width="16" height="16"></i></span>
       </button>
-      <div class="topbar-user" onclick="openSettingsModal()" title="Paramètres du compte">
+      <div class="topbar-user" onclick="openSettingsModal()" title="Paramètres du compte" role="button" tabindex="0" aria-label="Paramètres du compte">
         <div id="tb-av-wrap" class="topbar-avatar-container">
           <div class="topbar-avatar" id="tb-av"></div>
         </div>
         <span class="topbar-name" id="tb-name"></span>
       </div>
-      <button class="settings-btn" onclick="openSettingsModal()" title="Paramètres du compte">
-        <span class="icon"><i data-lucide="settings" width="16" height="16"></i></span>
-      </button>
-      <button class="logout-btn" onclick="doLogout()" title="Se déconnecter">
+      <button class="logout-btn" onclick="doLogout()" title="Se déconnecter" aria-label="Se déconnecter">
         <span class="icon"><i data-lucide="log-out" width="16" height="16"></i></span>
       </button>
     </div>
@@ -213,7 +210,7 @@
   <button id="lightbox-close" onclick="closeLightbox()" aria-label="Fermer">
     <span class="icon"><i data-lucide="x" width="20" height="20"></i></span>
   </button>
-  <img id="lightbox-img" src="" alt="Photo agrandie">
+  <img id="lightbox-img" src="" alt="Photo agrandie" onclick="event.stopPropagation()">
 </div>
 
 <!-- ── MODAL PUBLIER ── -->
@@ -222,13 +219,13 @@
     <div class="modal-handle"></div>
     <div class="modal-header">
       <div class="modal-title">Partager un moment</div>
-      <button class="modal-close-btn" onclick="closeModal()">
+      <button class="modal-close-btn" onclick="closeModal()" aria-label="Fermer">
         <span class="icon"><i data-lucide="x" width="18" height="18"></i></span>
       </button>
     </div>
 
     <div class="upload-zone" id="uz">
-      <input type="file" accept="image/*" id="file-in" onchange="previewImg(event)">
+      <input type="file" accept="image/*" capture="environment" id="file-in" onchange="previewImg(event)">
       <div class="uz-icon icon">
         <i data-lucide="camera" width="36" height="36"></i>
       </div>
@@ -263,7 +260,7 @@
     <div class="modal-handle"></div>
     <div class="modal-header">
       <div class="modal-title">Paramètres du compte</div>
-      <button class="modal-close-btn" onclick="closeSettingsModal()">
+      <button class="modal-close-btn" onclick="closeSettingsModal()" aria-label="Fermer">
         <span class="icon"><i data-lucide="x" width="18" height="18"></i></span>
       </button>
     </div>
@@ -273,7 +270,7 @@
         <div class="settings-avatar-preview" id="settings-av-prev" onclick="document.getElementById('settings-av-input').click()">
           <div id="settings-av-box" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center">🦄</div>
           <div class="settings-av-overlay">
-            <span class="icon"><i data-lucide="camera" width="22" height="22"></i></span>
+            <span class="icon"><i data-lucide="camera" width="14" height="14"></i></span>
           </div>
         </div>
         <input type="file" accept="image/*" id="settings-av-input" style="display:none" onchange="previewSettingsAvatar(event)">

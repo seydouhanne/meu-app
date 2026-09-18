@@ -1,6 +1,26 @@
 // ── LUCIDE init ──
 document.addEventListener('DOMContentLoaded', () => lucide.createIcons());
 
+// ── KEYBOARD AVOIDANCE ──
+// Keeps a modal's primary action reachable when the on-screen keyboard
+// opens, by scrolling its anchor into view shortly after a field is
+// focused (long enough for the keyboard's open animation to settle).
+function keepInViewOnFocus(fieldId, anchorId) {
+  const field = document.getElementById(fieldId);
+  if (!field) return;
+  field.addEventListener('focus', () => {
+    setTimeout(() => {
+      document.getElementById(anchorId)?.scrollIntoView({ block: 'end', behavior: 'smooth' });
+    }, 300);
+  });
+}
+document.addEventListener('DOMContentLoaded', () => {
+  keepInViewOnFocus('caption', 'btn-post');
+  keepInViewOnFocus('settings-name', 'btn-save-settings');
+  keepInViewOnFocus('settings-emoji', 'btn-save-settings');
+  keepInViewOnFocus('settings-password', 'btn-save-settings');
+});
+
 // ── CONFIG ──
 window.CFG = null;
 const cfgScript = document.createElement('script');
@@ -753,7 +773,7 @@ function buildCard(post) {
     : '';
 
   const deleteHtml = isOwn
-    ? `<button class="post-del" onclick="toggleDeleteConfirm('${post.id}')" title="Supprimer">
+    ? `<button class="post-del" onclick="toggleDeleteConfirm('${post.id}')" title="Supprimer" aria-label="Supprimer le moment">
          <i data-lucide="trash-2" width="16" height="16"></i>
        </button>
        <div class="delete-confirm" id="dc-${post.id}">
@@ -791,8 +811,8 @@ function buildCard(post) {
         <div class="c-input-row">
           <input class="c-input" type="text" placeholder="Un commentaire…" id="ci-${post.id}"
                  onkeydown="if(event.key==='Enter')sendComment('${post.id}')">
-          <button class="c-send" onclick="sendComment('${post.id}')">
-            <i data-lucide="send" width="14" height="14"></i>
+          <button class="c-send" onclick="sendComment('${post.id}')" aria-label="Envoyer le commentaire">
+            <i data-lucide="send" width="16" height="16"></i>
           </button>
         </div>
       </div>
@@ -898,7 +918,7 @@ function renderReactionsRow(post, meId) {
   const rxBtns = Object.entries(rxMap).map(([e,v]) =>
     `<button class="rxn-btn${v.mine?' mine':''}" onclick="toggleRxn('${post.id}','${e}')">${e}<span class="cnt">${v.count>1?v.count:''}</span></button>`
   ).join('');
-  return `${rxBtns}<button class="add-rxn-btn" onclick="togglePicker('${post.id}')"><i data-lucide="smile-plus" width="15" height="15"></i></button>`;
+  return `${rxBtns}<button class="add-rxn-btn" onclick="togglePicker('${post.id}')" aria-label="Ajouter une réaction"><i data-lucide="smile-plus" width="15" height="15"></i></button>`;
 }
 function togglePicker(pid) {
   const wrap = document.getElementById(`epwrap-${pid}`);
