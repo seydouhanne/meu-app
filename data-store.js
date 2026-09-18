@@ -10,46 +10,57 @@ const DataStore = (function () {
   let _posts = [];
   let _profiles = {};
   let _sha = null;
+  let _sessionToken = null;
 
-  // ── GitHub Contents API ──
-  function getToken() {
-    if (CFG._tk) return atob([...CFG._tk].reverse().join(''));
-    return CFG.token || '';
+  // ── Worker-proxied GitHub Contents API ──
+  // The GitHub token lives only on the Worker now. The client holds a
+  // short-lived session token (obtained via login()) instead.
+  function workerBase() {
+    return `${CFG.push.workerUrl}/gh`;
   }
-  const GH = () => ({
-    base: `https://api.github.com/repos/${CFG.owner}/${CFG.repo}/contents`,
-    headers: {
-      Authorization: `token ${getToken()}`,
-      Accept: 'application/vnd.github.v3+json',
-      'Content-Type': 'application/json'
+  function authHeaders() {
+    return { Authorization: `Bearer ${_sessionToken}`, 'Content-Type': 'application/json' };
+  }
+  async function login(userId, passwordHash) {
+    let r;
+    try {
+      r = await fetch(`${CFG.push.workerUrl}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, passwordHash })
+      });
+    } catch (e) {
+      console.error('Login request failed:', e);
+      throw new Error('Erreur de connexion au serveur');
     }
-  });
+    if (!r.ok) return false;
+    const { token } = await r.json();
+    _sessionToken = token;
+    return true;
+  }
   async function ghGet(path) {
-    const { base, headers } = GH();
-    const r = await fetch(`${base}/${path}`, { headers });
+    const r = await fetch(`${workerBase()}/${path}`, { headers: authHeaders() });
     if (r.status === 404) return null;
     if (!r.ok) throw new Error(`GitHub GET ${path}: ${r.status}`);
     return r.json();
   }
   async function ghPut(path, content, sha, message) {
-    const { base, headers } = GH();
     const body = { message, content: btoa(unescape(encodeURIComponent(content))) };
     if (sha) body.sha = sha;
-    const r = await fetch(`${base}/${path}`, { method:'PUT', headers, body: JSON.stringify(body) });
+    const r = await fetch(`${workerBase()}/${path}`, { method:'PUT', headers: authHeaders(), body: JSON.stringify(body) });
     if (!r.ok) throw new Error(`GitHub PUT ${path}: ${r.status}`);
     return r.json();
   }
   async function ghPutBinary(path, arrayBuffer, sha, message) {
-    const { base, headers } = GH();
     const bytes = new Uint8Array(arrayBuffer);
     const CHUNK = 8192; let binary = '';
     for (let i = 0; i < bytes.length; i += CHUNK) binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
     const body = { message, content: btoa(binary) };
     if (sha) body.sha = sha;
-    const r = await fetch(`${base}/${path}`, { method:'PUT', headers, body: JSON.stringify(body) });
+    const r = await fetch(`${workerBase()}/${path}`, { method:'PUT', headers: authHeaders(), body: JSON.stringify(body) });
     if (!r.ok) {
       let detail = r.status;
-      try { const j = await r.json(); detail = j.message || r.status; } catch(_) {}
+      try { const j = await r.json(); detail = j.error || r.status; } catch(_) {}
       throw new Error(`GitHub ${r.status}: ${detail}`);
     }
     return r.json();
@@ -198,8 +209,8 @@ const DataStore = (function () {
   }
 
   function reset() {
-    _posts = []; _profiles = {}; _sha = null;
+    _posts = []; _profiles = {}; _sha = null; _sessionToken = null;
   }
 
-  return { load, checkForUpdates, addPost, deletePost, addComment, toggleReaction, updateProfile, getState, reset };
+  return { login, load, checkForUpdates, addPost, deletePost, addComment, toggleReaction, updateProfile, getState, reset };
 })();

@@ -1,28 +1,22 @@
-# Activer les notifications push — Guide de déploiement
+# Déploiement du Worker — guide
 
-Ce que ça change : quand Saidou ou Antiss poste, commente ou réagit, l'autre
-reçoit une vraie notification sur son téléphone/ordi, **même app fermée**.
+Le Worker fait maintenant deux choses : (1) envoyer les notifications
+push, comme avant, et (2) tenir le token GitHub côté serveur et servir
+de passerelle pour toutes les lectures/écritures de `data.json` et des
+photos. **L'app ne peut plus se connecter du tout tant que le Worker
+n'est pas déployé** — ce n'est plus une fonctionnalité optionnelle.
 
-Il y a deux parties à déployer : le **Worker** (le petit service qui envoie
-les push) et les **fichiers de l'app** (à pousser dans ton repo GitHub comme
-d'habitude).
-
-Clés déjà générées pour toi (à utiliser telles quelles, ou à régénérer si tu préfères) :
-
-```
-VAPID_PUBLIC_KEY  = BEMZA5KNxjQu_VhUTdtCJ3hybLxnpLLVr3Iq0I9BR_BUuKndqUhZ5FzvdbIIxrSIQaMDm6rq-lnDjjOM0wsBnaA
-VAPID_PRIVATE_KEY = LLGaXKuRQHozFPBvCFAsdmJqAjf40uC_iB7clDxA0Mk
-APP_SECRET        = HrcgcqMs9HJEjUFLqfKlpR0ueC1KCg3_
-```
-
-⚠️ `VAPID_PRIVATE_KEY` et `APP_SECRET` ne doivent **jamais** aller dans
-`config.js` ou GitHub — uniquement dans les secrets du Worker (étape 4).
-La clé publique VAPID, elle, est déjà dans `config.js` : rien à faire.
+⚠️ Si tu avais un ancien token GitHub généré via l'écran Setup de
+l'app (stocké dans `config.js`), il a été exposé publiquement — révoque-le
+sur https://github.com/settings/tokens et crées-en un nouveau pour
+l'étape 4 ci-dessous. `config.js` ne contient plus aucun secret
+maintenant : plus besoin de garder le repo privé pour ça.
 
 ## 1. Prérequis
 
 - Un compte Cloudflare gratuit → https://dash.cloudflare.com/sign-up
 - Node.js installé sur ton ordi
+- Un nouveau token GitHub (scope `repo` uniquement) → https://github.com/settings/tokens/new?scopes=repo&description=MeU-App
 
 ## 2. Installer les dépendances du Worker
 
@@ -38,22 +32,43 @@ npx wrangler login
 npx wrangler kv namespace create PUSH_SUBS
 ```
 
-Cette dernière commande affiche un `id`. Ouvre `wrangler.toml` et remplace
-`REPLACE_WITH_KV_NAMESPACE_ID` par cet id.
+Cette dernière commande affiche un `id`. Ouvre `worker/wrangler.toml` et
+remplace `REPLACE_WITH_KV_NAMESPACE_ID` par cet id.
 
-Vérifie aussi la ligne `ALLOWED_ORIGIN` dans `wrangler.toml` — elle doit
-correspondre à l'URL de ton site (`https://seydouhanne.github.io` par
-défaut, à changer si tu utilises un domaine personnalisé).
+Vérifie aussi `ALLOWED_ORIGIN`, `GITHUB_OWNER` et `GITHUB_REPO` dans
+`worker/wrangler.toml` — `ALLOWED_ORIGIN` doit correspondre à l'URL de
+ton site déployé.
 
 ## 4. Configurer les secrets
 
+Depuis `worker/` :
+
 ```bash
+npx wrangler secret put GITHUB_TOKEN
+npx wrangler secret put USER1_HASH
+npx wrangler secret put USER2_HASH
 npx wrangler secret put VAPID_PUBLIC_KEY
 npx wrangler secret put VAPID_PRIVATE_KEY
 npx wrangler secret put APP_SECRET
 ```
 
-Colle la valeur correspondante à chaque invite (voir tableau ci-dessus).
+- `GITHUB_TOKEN` : le nouveau token créé à l'étape 1. Ne va **jamais**
+  dans `config.js` ni dans le repo.
+- `USER1_HASH` / `USER2_HASH` : générés par l'écran Setup de l'app en
+  même temps que `config.js` (section "Copie ces valeurs" sous le
+  code généré). Ce sont des hash, pas les mots de passe eux-mêmes.
+- `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `APP_SECRET` : clés
+  déjà générées, à utiliser telles quelles ou à régénérer si tu
+  préfères :
+
+```
+VAPID_PUBLIC_KEY  = BEMZA5KNxjQu_VhUTdtCJ3hybLxnpLLVr3Iq0I9BR_BUuKndqUhZ5FzvdbIIxrSIQaMDm6rq-lnDjjOM0wsBnaA
+VAPID_PRIVATE_KEY = LLGaXKuRQHozFPBvCFAsdmJqAjf40uC_iB7clDxA0Mk
+APP_SECRET        = HrcgcqMs9HJEjUFLqfKlpR0ueC1KCg3_
+```
+
+La clé publique VAPID est aussi dans `config.js` (`push.vapidPublicKey`)
+— rien à faire côté client pour celle-là.
 
 ## 5. Déployer
 
@@ -72,43 +87,47 @@ Ouvre `config.js` et remplace :
 workerUrl: "https://meu-push.YOUR-SUBDOMAIN.workers.dev",
 ```
 
-par l'URL réelle obtenue à l'étape 5.
+par l'URL réelle obtenue à l'étape 5, puis pousse `config.js` sur le
+repo. **Sans cette étape, personne ne peut se connecter** (le login
+passe désormais par le Worker).
 
 ## 7. Pousser les fichiers vers ton repo GitHub
 
-Ajoute/remplace ces fichiers à la racine du repo `meu-app` (à côté de
-`index.html` existant) :
+Ajoute/remplace ces fichiers à la racine du repo `meu-app` :
 
-- `index.html` (modifié)
-- `config.js` (modifié)
-- `sw.js` (nouveau)
-- `manifest.json` (nouveau)
-- `icon-192.png`, `icon-512.png`, `apple-touch-icon.png` (nouveaux)
+- `index.html`, `app.js`, `data-store.js`, `style.css` (modifiés)
+- `config.js` (modifié — plus de token, plus de hash, `workerUrl` à jour)
+- `sw.js`, `manifest.json`, les icônes (déjà en place)
 
-Le dossier `worker/` ne va **pas** dans ce repo — il vit uniquement sur
-Cloudflare (déployé à l'étape 5). Tu peux le garder de côté dans un dossier
-local, ou dans un repo séparé si tu veux le versionner.
+Le dossier `worker/` peut rester dans ce repo (il n'affecte pas le
+site statique) ou vivre à part — seul `npx wrangler deploy` compte
+pour lui, pas le déploiement du site.
 
 ## 8. Tester
 
-1. Ouvrez l'app sur vos téléphones respectifs.
-2. Cliquez sur la cloche 🔔 → l'icône `bell-ring` dans le panneau de
-   notifications, puis autorisez les notifications.
-3. **Sur iPhone** : Safari seul ne suffit pas pour le push app-fermée — il
-   faut d'abord faire *Partager → Sur l'écran d'accueil*, puis ouvrir l'app
-   depuis cette icône (pas depuis Safari) avant d'autoriser les
+1. Ouvrez l'app — l'écran de connexion doit maintenant passer par le
+   Worker. Un mauvais mot de passe doit toujours afficher "Mot de
+   passe incorrect" (le Worker répond 401, l'app ne distingue pas ce
+   cas d'une panne réseau côté message).
+2. Postez/commentez/réagissez — chaque action passe maintenant par
+   `POST/GET /gh/*` sur le Worker plutôt que par `api.github.com`
+   directement.
+3. Cliquez sur la cloche 🔔 → l'icône `bell-ring`, autorisez les
    notifications.
-4. **Sur Android/desktop** : ça marche directement depuis le navigateur,
-   sans installation.
-5. Fermez complètement l'app sur un téléphone, postez/commentez/réagissez
-   depuis l'autre → la notification doit arriver en quelques secondes.
+4. **Sur iPhone** : *Partager → Sur l'écran d'accueil*, ouvrez l'app
+   depuis cette icône avant d'autoriser les notifications.
+5. **Sur Android/desktop** : ça marche directement depuis le
+   navigateur.
+6. Fermez l'app sur un téléphone, postez depuis l'autre → la
+   notification doit arriver en quelques secondes.
 
 ## Sécurité — bon à savoir
 
-`APP_SECRET` et la clé VAPID publique sont dans `config.js`, donc visibles
-par quiconque a accès au code de la page (comme votre token GitHub
-actuel). Le pire cas possible : quelqu'un ayant ce secret pourrait envoyer
-de fausses notifications à vos deux comptes — pas un accès aux photos ou
-aux données. Si un jour tu veux le changer, relance juste
-`npx wrangler secret put APP_SECRET` avec une nouvelle valeur et mets à
-jour `config.js` en conséquence.
+Le token GitHub et les hash par défaut des mots de passe vivent
+uniquement dans les secrets du Worker maintenant — jamais dans le
+code servi au navigateur. `APP_SECRET` reste utilisé tel quel pour
+les routes push (`/subscribe`, `/unsubscribe`, `/send`) : le pire cas
+avec ce secret reste l'envoi de fausses notifications, pas un accès
+aux données. Les routes `/gh/*` utilisent un jeton de session
+distinct, signé par le Worker et valable 24h, obtenu uniquement après
+une connexion réussie.

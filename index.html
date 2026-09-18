@@ -63,15 +63,13 @@
         <span class="icon"><i data-lucide="key" width="13" height="13"></i></span>
         GitHub
       </h3>
+      <p class="setup-hint" style="margin-bottom:12px">
+        Le token GitHub ne se configure plus ici — il se met en place côté
+        Worker (<code>wrangler secret put GITHUB_TOKEN</code>), voir
+        <code>DEPLOY.md</code>. Ce token n'est jamais visible depuis le
+        navigateur.
+      </p>
       <div class="setup-field">
-        <label class="setup-label">Personal Access Token</label>
-        <input class="auth-input no-icon" type="password" id="s-token" placeholder="ghp_xxxxxxxxxxxx" style="margin-bottom:0">
-        <p class="setup-hint">
-          <a href="https://github.com/settings/tokens/new?scopes=repo&description=MeU-App" target="_blank">Crée un token ici</a>
-          — coche uniquement <code>repo</code>.
-        </p>
-      </div>
-      <div class="setup-field" style="margin-top:12px">
         <label class="setup-label">Nom d'utilisateur GitHub</label>
         <input class="auth-input no-icon" type="text" id="s-owner" placeholder="ton-pseudo" style="margin-bottom:0">
       </div>
@@ -132,8 +130,14 @@
         <span class="icon"><i data-lucide="copy" width="14" height="14"></i></span>
         <span>Copier le code</span>
       </button>
+      <p class="setup-hint" style="margin-top:14px">
+        Ensuite, sur le Worker (voir <code>DEPLOY.md</code>) :
+        <code>wrangler secret put USER1_HASH</code> et
+        <code>wrangler secret put USER2_HASH</code>, avec ces valeurs :
+      </p>
+      <pre id="setup-hashes" style="font-family:monospace;font-size:11px;background:var(--warm);border:1.5px solid var(--warm-mid);border-radius:10px;padding:10px;white-space:pre-wrap;word-break:break-all"></pre>
       <p class="setup-hint" style="margin-top:10px;text-align:center">
-        Garde ton repo <strong>privé</strong> — le token est stocké dans le code.
+        config.js ne contient plus de secret — il peut être commité sans risque.
       </p>
     </div>
   </div>

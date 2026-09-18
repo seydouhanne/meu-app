@@ -3,3 +3,5 @@ node_modules/
 repo.zip
 temp_extract/
 .DS_Store
+.dev.vars
+.wrangler/

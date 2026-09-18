@@ -66,7 +66,6 @@ function showSetup() {
   document.getElementById('setup-screen').style.display = 'flex';
 }
 async function generateConfig() {
-  const token = document.getElementById('s-token').value.trim();
   const owner = document.getElementById('s-owner').value.trim();
   const repo  = document.getElementById('s-repo').value.trim();
   const n1 = document.getElementById('s-n1').value.trim() || 'Moi';
@@ -75,12 +74,12 @@ async function generateConfig() {
   const n2 = document.getElementById('s-n2').value.trim() || 'Toi';
   const e2 = document.getElementById('s-e2').value.trim() || '💛';
   const p2 = document.getElementById('s-p2').value;
-  if (!token || !owner || !repo || !p1 || !p2) { showToast('Remplis tous les champs !', 'error'); return; }
+  if (!owner || !repo || !p1 || !p2) { showToast('Remplis tous les champs !', 'error'); return; }
   const h1 = await sha256(p1), h2 = await sha256(p2);
-  const b64 = btoa(token), mid = Math.floor(b64.length / 2);
-  const tk = [b64.slice(mid), b64.slice(0, mid)];
-  const code = `// Me&U — Config\nwindow.CFG = {\n  _tk: ["${tk[0]}","${tk[1]}"],\n  owner: "${owner}",\n  repo:  "${repo}",\n  users: {\n    user1: { name: "${n1}", emoji: "${e1}", hash: "${h1}" },\n    user2: { name: "${n2}", emoji: "${e2}", hash: "${h2}" }\n  }\n};`;
+  const code = `// Me&U — Config\nwindow.CFG = {\n  owner: "${owner}",\n  repo:  "${repo}",\n  users: {\n    user1: { name: "${n1}", emoji: "${e1}" },\n    user2: { name: "${n2}", emoji: "${e2}" }\n  }\n};`;
   document.getElementById('setup-code').value = code;
+  const hashesEl = document.getElementById('setup-hashes');
+  if (hashesEl) hashesEl.textContent = `USER1_HASH = ${h1}\nUSER2_HASH = ${h2}`;
   const out = document.getElementById('setup-result');
   out.style.display = 'block';
   out.scrollIntoView({ behavior: 'smooth' });
@@ -269,9 +268,17 @@ async function doLogin() {
     lucide.createIcons({ nodes: [err] }); return;
   }
   const hash = await sha256(pw);
-  const user = getUserProfile(selectedUid);
-  const targetHash = user.hash || CFG.users[selectedUid].hash;
-  if (hash === targetHash) {
+  let ok;
+  try {
+    ok = await DataStore.login(selectedUid, hash);
+  } catch (e) {
+    console.error('Login error:', e);
+    err.innerHTML = `<i data-lucide="alert-circle" width="14" height="14"></i> ${e.message || 'Erreur de connexion'}`;
+    lucide.createIcons({ nodes: [err] });
+    return;
+  }
+  if (ok) {
+    const user = getUserProfile(selectedUid);
     ME = { id: selectedUid, ...user };
     document.getElementById('auth-screen').style.display = 'none';
     updateHeaderUserUI();
