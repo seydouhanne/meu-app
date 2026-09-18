@@ -1,6 +1,15 @@
 {
   "posts": [
     {
+      "id": "p1789735208913ifd",
+      "userId": "user1",
+      "caption": "A flower for you",
+      "imgPath": "photos/1789735206508_4b42.jpg",
+      "ts": 1789735208913,
+      "reactions": [],
+      "comments": []
+    },
+    {
       "id": "p1785930122472o2x",
       "userId": "user2",
       "caption": "",
