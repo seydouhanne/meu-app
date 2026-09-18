@@ -5,14 +5,14 @@ compatibility_flags = ["nodejs_compat"]
 
 # Origine autorisée à appeler ce Worker (ton site déployé).
 [vars]
-ALLOWED_ORIGIN = "https://seydouhanne.github.io"
+ALLOWED_ORIGIN = "https://meu-app-virid-kappa.vercel.app"
 GITHUB_OWNER = "seydouhanne"
 GITHUB_REPO = "meu-app"
 
 # Créée avec : wrangler kv namespace create PUSH_SUBS
 # Remplace "id" par l'ID retourné par la commande.
 kv_namespaces = [
-  { binding = "PUSH_SUBS", id = "REPLACE_WITH_KV_NAMESPACE_ID" }
+  { binding = "PUSH_SUBS", id = "e96d4a16fed6407ea0ac817cd7cf81cf" }
 ]
 
 # Secrets (jamais dans ce fichier) — voir DEPLOY.md :

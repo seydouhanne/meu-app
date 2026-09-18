@@ -57,18 +57,30 @@ npx wrangler secret put APP_SECRET
 - `USER1_HASH` / `USER2_HASH` : générés par l'écran Setup de l'app en
   même temps que `config.js` (section "Copie ces valeurs" sous le
   code généré). Ce sont des hash, pas les mots de passe eux-mêmes.
-- `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `APP_SECRET` : clés
-  déjà générées, à utiliser telles quelles ou à régénérer si tu
-  préfères :
+- `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` : génère ta propre paire
+  (depuis `worker/`, où `web-push` est déjà installé) :
 
-```
-VAPID_PUBLIC_KEY  = BEMZA5KNxjQu_VhUTdtCJ3hybLxnpLLVr3Iq0I9BR_BUuKndqUhZ5FzvdbIIxrSIQaMDm6rq-lnDjjOM0wsBnaA
-VAPID_PRIVATE_KEY = LLGaXKuRQHozFPBvCFAsdmJqAjf40uC_iB7clDxA0Mk
-APP_SECRET        = HrcgcqMs9HJEjUFLqfKlpR0ueC1KCg3_
-```
+  ```bash
+  npx web-push generate-vapid-keys
+  ```
 
-La clé publique VAPID est aussi dans `config.js` (`push.vapidPublicKey`)
-— rien à faire côté client pour celle-là.
+  Copie la clé publique dans `config.js` (`push.vapidPublicKey`) en
+  plus de la mettre en secret ici — c'est la seule des deux qui va
+  aussi côté client, et ce n'est pas sensible (elle est faite pour
+  être publique).
+- `APP_SECRET` : une valeur aléatoire à toi, par exemple :
+
+  ```bash
+  node -e "console.log(require('crypto').randomBytes(24).toString('base64url'))"
+  ```
+
+  Colle-la aussi dans `config.js` (`push.secret`) — les deux copies
+  doivent être identiques.
+
+Ne mets aucune de ces valeurs dans un fichier commité autre que
+`config.js` pour la clé publique VAPID et le secret app — ni dans ce
+guide, ni ailleurs. C'est exactement le problème que ce Worker existe
+pour éviter côté token GitHub ; pas de raison de le recréer ici.
 
 ## 5. Déployer
 
