@@ -6,7 +6,12 @@
       "caption": "",
       "imgPath": "photos/1785930120874_ws8j.jpeg",
       "ts": 1785930122472,
-      "reactions": [],
+      "reactions": [
+        {
+          "userId": "user1",
+          "emoji": "🥺"
+        }
+      ],
       "comments": []
     },
     {
@@ -277,5 +282,6 @@
         }
       ]
     }
-  ]
+  ],
+  "profiles": {}
 }
