@@ -10,7 +10,7 @@ cfgScript.onerror = () => { lucide.createIcons(); showSetup(); };
 document.head.appendChild(cfgScript);
 
 // ── STATE ──
-let ME = null, POSTS = [], DATA_SHA = null;
+let ME = null, POSTS = [], PROFILES = {};
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
@@ -99,8 +99,6 @@ function copyConfig() {
 // ─────────────────────────────────────────
 // PROFILES & AVATARS SYSTEM
 // ─────────────────────────────────────────
-let PROFILES = {};
-
 function getPartnerId() {
   return ME.id === 'user1' ? 'user2' : 'user1';
 }
@@ -208,42 +206,16 @@ async function saveSettings() {
   }
 
   document.getElementById('btn-save-settings').disabled = true;
-  let avatarPath = PROFILES[ME.id]?.avatarPath || null;
-
-  if (removeAvatarFlag) {
-    avatarPath = null;
-  } else if (pickedSettingsAvatarFile) {
-    if (pickedSettingsAvatarFile.size > 10 * 1024 * 1024) {
-      setSettingsStatus('Photo trop lourde (max 10 Mo)');
-      showToast('Photo trop lourde — max 10 Mo', 'error');
-      document.getElementById('btn-save-settings').disabled = false; return;
-    }
-    setSettingsStatus('Upload de la photo de profil…', true);
-    try {
-      const ext = pickedSettingsAvatarFile.name.split('.').pop().toLowerCase();
-      avatarPath = `photos/avatar_${ME.id}_${Date.now()}.${ext}`;
-      await ghPutBinary(avatarPath, await pickedSettingsAvatarFile.arrayBuffer(), null, `Avatar: ${avatarPath}`);
-    } catch(e) {
-      console.error('Avatar upload error:', e);
-      setSettingsStatus('Erreur upload avatar : ' + e.message);
-      showToast('Échec upload photo de profil', 'error');
-      document.getElementById('btn-save-settings').disabled = false; return;
-    }
-  }
-
-  setSettingsStatus('Enregistrement du profil…', true);
-  PROFILES[ME.id] = PROFILES[ME.id] || {};
-  PROFILES[ME.id].name = newName;
-  PROFILES[ME.id].emoji = newEmoji;
-  PROFILES[ME.id].avatarPath = avatarPath;
-  PROFILES[ME.id].ts = Date.now();
-
-  if (newPw) {
-    PROFILES[ME.id].hash = await sha256(newPw);
-  }
+  setSettingsStatus(pickedSettingsAvatarFile ? 'Upload de la photo de profil…' : 'Enregistrement du profil…', true);
 
   try {
-    await savePosts();
+    const newPasswordHash = newPw ? await sha256(newPw) : null;
+    const { posts, profiles } = await DataStore.updateProfile({
+      userId: ME.id, name: newName, emoji: newEmoji,
+      avatarFile: pickedSettingsAvatarFile, removeAvatar: removeAvatarFlag,
+      newPasswordHash
+    });
+    POSTS = posts; PROFILES = profiles;
     closeSettingsModal();
     updateHeaderUserUI();
     renderFeed();
@@ -251,8 +223,10 @@ async function saveSettings() {
     showToast('Profil mis à jour avec succès !', 'success');
   } catch(e) {
     console.error('Save settings error:', e);
-    setSettingsStatus('Erreur d\'enregistrement');
-    showToast('Erreur d\'enregistrement', 'error');
+    const { posts, profiles } = DataStore.getState();
+    POSTS = posts; PROFILES = profiles;
+    setSettingsStatus(e.message || 'Erreur d\'enregistrement');
+    showToast(e.message || 'Erreur d\'enregistrement', 'error');
     document.getElementById('btn-save-settings').disabled = false;
   }
 }
@@ -315,7 +289,8 @@ async function doLogin() {
 }
 function doLogout() {
   if (pollingInterval) clearInterval(pollingInterval);
-  ME = null; POSTS = []; DATA_SHA = null;
+  ME = null; POSTS = [];
+  DataStore.reset();
   document.getElementById('app').style.display = 'none';
   document.getElementById('auth-screen').style.display = 'flex';
   document.getElementById('auth-pw').value = '';
@@ -665,15 +640,11 @@ async function sendPushToPartner(title, body, postId) {
 async function silentCheckForUpdates() {
   if (!ME) return;
   try {
-    const file = await ghGet('data.json');
-    if (!file || file.sha === DATA_SHA) return;
-
-    const json = decodeURIComponent(escape(atob(file.content.replace(/\n/g,''))));
-    const newPosts = JSON.parse(json).posts || [];
-    DATA_SHA = file.sha;
+    const result = await DataStore.checkForUpdates();
+    if (!result) return;
 
     const oldNotifIds = getNotifications().map(n => n.id);
-    POSTS = newPosts;
+    POSTS = result.posts; PROFILES = result.profiles;
     const currentNotifs = getNotifications();
     const freshNotifs = currentNotifs.filter(n => !oldNotifIds.includes(n.id) && !READ_NOTIFS.includes(n.id));
 
@@ -734,52 +705,6 @@ async function checkAndNotifyOnLogin() {
 }
 
 // ─────────────────────────────────────────
-// GITHUB HELPERS
-// ─────────────────────────────────────────
-function getToken() {
-  if (CFG._tk) return atob([...CFG._tk].reverse().join(''));
-  return CFG.token || '';
-}
-const GH = () => ({
-  base: `https://api.github.com/repos/${CFG.owner}/${CFG.repo}/contents`,
-  headers: {
-    Authorization: `token ${getToken()}`,
-    Accept: 'application/vnd.github.v3+json',
-    'Content-Type': 'application/json'
-  }
-});
-async function ghGet(path) {
-  const { base, headers } = GH();
-  const r = await fetch(`${base}/${path}`, { headers });
-  if (r.status === 404) return null;
-  if (!r.ok) throw new Error(`GitHub GET ${path}: ${r.status}`);
-  return r.json();
-}
-async function ghPut(path, content, sha, message) {
-  const { base, headers } = GH();
-  const body = { message, content: btoa(unescape(encodeURIComponent(content))) };
-  if (sha) body.sha = sha;
-  const r = await fetch(`${base}/${path}`, { method:'PUT', headers, body: JSON.stringify(body) });
-  if (!r.ok) throw new Error(`GitHub PUT ${path}: ${r.status}`);
-  return r.json();
-}
-async function ghPutBinary(path, arrayBuffer, sha, message) {
-  const { base, headers } = GH();
-  const bytes = new Uint8Array(arrayBuffer);
-  const CHUNK = 8192; let binary = '';
-  for (let i = 0; i < bytes.length; i += CHUNK) binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
-  const body = { message, content: btoa(binary) };
-  if (sha) body.sha = sha;
-  const r = await fetch(`${base}/${path}`, { method:'PUT', headers, body: JSON.stringify(body) });
-  if (!r.ok) {
-    let detail = r.status;
-    try { const j = await r.json(); detail = j.message || r.status; } catch(_) {}
-    throw new Error(`GitHub ${r.status}: ${detail}`);
-  }
-  return r.json();
-}
-
-// ─────────────────────────────────────────
 // SKELETON LOADERS
 // ─────────────────────────────────────────
 function showSkeletons(count = 3) {
@@ -814,18 +739,8 @@ function clearSkeletons() {
 async function loadPosts() {
   showSkeletons(3);
   try {
-    const file = await ghGet('data.json');
-    if (file) {
-      DATA_SHA = file.sha;
-      const json = decodeURIComponent(escape(atob(file.content.replace(/\n/g,''))));
-      const parsed = JSON.parse(json);
-      POSTS = parsed.posts || [];
-      PROFILES = parsed.profiles || {};
-    } else {
-      const res = await ghPut('data.json', '{"posts":[],"profiles":{}}', null, 'Init data.json');
-      DATA_SHA = res.content.sha;
-      POSTS = []; PROFILES = {};
-    }
+    const { posts, profiles } = await DataStore.load();
+    POSTS = posts; PROFILES = profiles;
   } catch(e) {
     console.error(e);
     POSTS = []; PROFILES = {};
@@ -843,21 +758,6 @@ async function refreshFeed() {
   await loadPosts();
   btn.classList.remove('spinning');
   showToast('Fil mis à jour', 'success');
-}
-
-async function savePosts() {
-  const json = JSON.stringify({ posts: POSTS, profiles: PROFILES }, null, 2);
-  try {
-    const res = await ghPut('data.json', json, DATA_SHA, 'Update data.json');
-    DATA_SHA = res.content.sha;
-  } catch(e) {
-    if (e.message && (e.message.includes('409') || e.message.includes('422'))) {
-      const file = await ghGet('data.json');
-      if (file) DATA_SHA = file.sha;
-      const res2 = await ghPut('data.json', json, DATA_SHA, 'Update data.json');
-      DATA_SHA = res2.content.sha;
-    } else throw e;
-  }
 }
 
 // ─────────────────────────────────────────
@@ -885,13 +785,7 @@ function buildCard(post) {
   });
 
   const cmtCount = (post.comments || []).length;
-  const comments = (post.comments || []).map(c => {
-    const cu = getUserProfile(c.userId);
-    return `<div class="comment-item">
-      ${renderAvatarHtml(c.userId, 'c-avatar')}
-      <div class="c-bubble"><div class="c-author">${esc(cu.name)}</div><div class="c-text">${esc(c.text)}</div></div>
-    </div>`;
-  }).join('');
+  const comments = renderCommentItems(post);
 
   const toggleLabel = cmtCount === 0 ? 'Commenter'
     : cmtCount === 1 ? '1 commentaire' : `${cmtCount} commentaires`;
@@ -1003,26 +897,45 @@ function updateCommentToggleLabel(pid) {
   const el = document.getElementById(`ct-label-${pid}`);
   if (el) el.textContent = label;
 }
+function renderCommentItems(post) {
+  return (post.comments || []).map(c => {
+    const cu = getUserProfile(c.userId);
+    return `<div class="comment-item">
+      ${renderAvatarHtml(c.userId, 'c-avatar')}
+      <div class="c-bubble"><div class="c-author">${esc(cu.name)}</div><div class="c-text">${esc(c.text)}</div></div>
+    </div>`;
+  }).join('');
+}
 async function sendComment(pid) {
   const input = document.getElementById(`ci-${pid}`);
   const text = input.value.trim(); if (!text) return;
   input.value = '';
-  const post = POSTS.find(p => p.id === pid); if (!post) return;
-  post.comments = post.comments || [];
-  post.comments.push({ userId: ME.id, text, ts: Date.now() });
-  const inputRow = input.closest('.c-input-row');
-  const div = document.createElement('div');
-  div.className = 'comment-item';
-  const meProfile = getUserProfile(ME.id);
-  div.innerHTML = `${renderAvatarHtml(ME.id, 'c-avatar')}<div class="c-bubble"><div class="c-author">${esc(meProfile.name)}</div><div class="c-text">${esc(text)}</div></div>`;
-  inputRow.parentNode.insertBefore(div, inputRow);
-  updateCommentToggleLabel(pid);
   openComments(pid);
+
+  const meProfile = getUserProfile(ME.id);
   try {
-    await savePosts();
+    const { posts, profiles } = await DataStore.addComment({ postId: pid, userId: ME.id, text });
+    POSTS = posts; PROFILES = profiles;
     const snippet = text.length > 60 ? text.slice(0, 60) + '…' : text;
     sendPushToPartner(`${meProfile.name} a commenté`, snippet, pid);
-  } catch(e) { console.error('Comment save failed:', e); showToast('Erreur de sauvegarde', 'error'); }
+  } catch(e) {
+    console.error('Comment save failed:', e);
+    const { posts, profiles } = DataStore.getState();
+    POSTS = posts; PROFILES = profiles;
+    showToast('Erreur de sauvegarde', 'error');
+  }
+
+  const post = POSTS.find(p => p.id === pid);
+  if (post) {
+    const list = document.getElementById(`cmts-${pid}`);
+    const inputRow = list?.querySelector('.c-input-row');
+    if (list && inputRow) {
+      list.querySelectorAll('.comment-item').forEach(el => el.remove());
+      inputRow.insertAdjacentHTML('beforebegin', renderCommentItems(post));
+      lucide.createIcons({ nodes: [list] });
+    }
+    updateCommentToggleLabel(pid);
+  }
 }
 
 // ─────────────────────────────────────────
@@ -1054,22 +967,25 @@ function togglePicker(pid) {
   picker.classList.toggle('open');
 }
 async function toggleRxn(pid, emoji) {
-  const post = POSTS.find(p => p.id === pid); if (!post) return;
-  post.reactions = post.reactions || [];
-  const idx = post.reactions.findIndex(r => r.userId === ME.id && r.emoji === emoji);
-  const wasAdded = idx < 0;
-  if (idx >= 0) post.reactions.splice(idx,1);
-  else post.reactions.push({ userId: ME.id, emoji });
   document.getElementById(`ep-${pid}`)?.classList.remove('open');
+  try {
+    const { posts, profiles, wasAdded } = await DataStore.toggleReaction({ postId: pid, userId: ME.id, emoji });
+    POSTS = posts; PROFILES = profiles;
+    if (wasAdded) {
+      const meProfile = getUserProfile(ME.id);
+      sendPushToPartner(`${meProfile.name} a réagi ${emoji}`, 'à votre moment', pid);
+    }
+  } catch(e) {
+    console.error('Reaction save failed:', e);
+    const { posts, profiles } = DataStore.getState();
+    POSTS = posts; PROFILES = profiles;
+    showToast('Erreur de sauvegarde', 'error');
+  }
+  const post = POSTS.find(p => p.id === pid);
   const row = document.getElementById(`rxrow-${pid}`);
-  if (row) {
+  if (row && post) {
     row.innerHTML = renderReactionsRow(post, ME.id);
     lucide.createIcons({ nodes: [row] });
-  }
-  await savePosts();
-  if (wasAdded) {
-    const meProfile = getUserProfile(ME.id);
-    sendPushToPartner(`${meProfile.name} a réagi ${emoji}`, 'à votre moment', pid);
   }
 }
 
@@ -1118,45 +1034,23 @@ async function submitPost() {
   const caption = document.getElementById('caption').value.trim();
   if (!pickedFile && !caption) return;
   document.getElementById('btn-post').disabled = true;
-  let imgPath = null;
+  setStatus(pickedFile ? 'Upload de la photo…' : 'Sauvegarde…', true);
 
-  if (pickedFile) {
-    if (pickedFile.size > 10 * 1024 * 1024) {
-      setStatus('Photo trop lourde (max 10 Mo)');
-      showToast('Photo trop lourde — max 10 Mo', 'error');
-      document.getElementById('btn-post').disabled = false; return;
-    }
-    setStatus('Upload de la photo…', true);
-    try {
-      const ext = pickedFile.name.split('.').pop().toLowerCase();
-      imgPath = `photos/${Date.now()}_${Math.random().toString(36).slice(2,6)}.${ext}`;
-      await ghPutBinary(imgPath, await pickedFile.arrayBuffer(), null, `Photo: ${imgPath}`);
-    } catch(e) {
-      console.error('Upload error:', e);
-      setStatus('Erreur upload : ' + e.message);
-      showToast('Échec de l\'upload', 'error');
-      document.getElementById('btn-post').disabled = false; return;
-    }
-  }
-
-  setStatus('Sauvegarde…', true);
-  const post = {
-    id: `p${Date.now()}${Math.random().toString(36).slice(2,5)}`,
-    userId: ME.id, caption, imgPath, ts: Date.now(), reactions: [], comments: []
-  };
-  POSTS.unshift(post);
   try {
-    await savePosts();
+    const { posts, profiles } = await DataStore.addPost({ userId: ME.id, caption, file: pickedFile });
+    POSTS = posts; PROFILES = profiles;
     closeModal();
     renderFeed();
     showToast('Moment partagé !', 'success');
     const meProfile = getUserProfile(ME.id);
     const snippet = caption ? (caption.length > 60 ? caption.slice(0, 60) + '…' : caption) : 'Nouvelle photo à découvrir 📸';
-    sendPushToPartner(`${meProfile.name} a partagé un nouveau moment`, snippet, post.id);
+    sendPushToPartner(`${meProfile.name} a partagé un nouveau moment`, snippet, POSTS[0].id);
   } catch(e) {
-    POSTS.shift();
-    setStatus('Erreur de sauvegarde');
-    showToast('Erreur de sauvegarde', 'error');
+    console.error('Post save failed:', e);
+    const { posts, profiles } = DataStore.getState();
+    POSTS = posts; PROFILES = profiles;
+    setStatus(e.message || 'Erreur de sauvegarde');
+    showToast(e.message || 'Erreur de sauvegarde', 'error');
     document.getElementById('btn-post').disabled = false;
   }
 }
@@ -1165,9 +1059,16 @@ async function submitPost() {
 // DELETE
 // ─────────────────────────────────────────
 async function deletePost(pid) {
-  POSTS = POSTS.filter(p => p.id !== pid);
-  document.getElementById(`card-${pid}`)?.remove();
-  if (!POSTS.length) document.getElementById('feed-empty').style.display = 'block';
-  await savePosts();
-  showToast('Moment supprimé', '');
+  try {
+    const { posts, profiles } = await DataStore.deletePost({ postId: pid });
+    POSTS = posts; PROFILES = profiles;
+    document.getElementById(`card-${pid}`)?.remove();
+    if (!POSTS.length) document.getElementById('feed-empty').style.display = 'block';
+    showToast('Moment supprimé', '');
+  } catch(e) {
+    console.error('Delete failed:', e);
+    const { posts, profiles } = DataStore.getState();
+    POSTS = posts; PROFILES = profiles;
+    showToast('Erreur de suppression', 'error');
+  }
 }
