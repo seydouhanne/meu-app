@@ -1,15 +1,6 @@
 {
   "posts": [
     {
-      "id": "p1789734968867f0r",
-      "userId": "user1",
-      "caption": "dff",
-      "imgPath": null,
-      "ts": 1789734968873,
-      "reactions": [],
-      "comments": []
-    },
-    {
       "id": "p1785930122472o2x",
       "userId": "user2",
       "caption": "",
